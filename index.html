@@ -907,7 +907,7 @@ function ensureDefaults() {
 // ─── STEP 1: Render immediately (before Firebase responds) ───
 // (executed at bottom of script after all functions defined)
 
-// ─── STEP 2: Firebase real-time sync ───
+// ─── Firebase real-time sync ───
 const STATE_DOC  = doc(db, 'painel_ssp', 'state');
 const SESSION_ID = Math.random().toString(36).slice(2);
 let isSaving     = false;
@@ -924,15 +924,14 @@ function conectarFirebase() {
   unsubscribe = onSnapshot(
     STATE_DOC,
     (snap) => {
-      // Ignore snapshots triggered by our own writes
-      if (isSaving) return;
-
       firebaseReady = true;
 
+      // Merge remote data — always, even after our own save
       if (snap.exists()) {
         const remote = snap.data();
         Object.keys(remote).forEach(pid => {
-          if (pid === '__meta') return;
+          // Skip metadata and non-process keys
+          if (pid === '__meta' || !pid.startsWith('p')) return;
           data[pid] = { ...defaultRecord(), ...remote[pid] };
         });
         ensureDefaults();
@@ -942,14 +941,21 @@ function conectarFirebase() {
         firstLoad = false;
         setStatus('🟢 Conectado', false);
         render();
-      } else {
+      } else if (!isSaving) {
+        // Update from another user
         setStatus('🔄 Atualizado', false);
         render();
         setTimeout(() => setStatus('🟢 Conectado', false), 2000);
+      } else {
+        // Our own save confirmed by server
+        setStatus('✓ Salvo — ' + new Date().toLocaleTimeString('pt-BR'), false);
+        flashSaved();
+        isSaving = false;
       }
     },
     (err) => {
       firebaseReady = false;
+      isSaving = false; // unblock on error
       console.warn('Firebase:', err.code, err.message);
 
       if (err.code === 'permission-denied') {
@@ -970,18 +976,39 @@ conectarFirebase();
 async function saveState() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
+    if (!firebaseReady) {
+      setStatus('⚠️ Sem conexão — aguarde reconexão', true);
+      return;
+    }
     try {
       isSaving = true;
       setStatus('💾 Salvando…', false);
-      const payload = { ...data, __meta: { session: SESSION_ID, ts: Date.now() } };
+
+      // Build payload WITHOUT polluting data object with __meta
+      const payload = {};
+      Object.keys(data).forEach(pid => { payload[pid] = data[pid]; });
+      payload.__meta = { session: SESSION_ID, ts: Date.now() };
+
       await setDoc(STATE_DOC, payload, { merge: true });
-      setStatus('✓ Salvo — ' + new Date().toLocaleTimeString('pt-BR'), false);
-      flashSaved();
+      // Status and isSaving=false handled by onSnapshot confirmation above
+      // Safety fallback in case onSnapshot doesn't fire
+      setTimeout(() => {
+        if (isSaving) {
+          isSaving = false;
+          setStatus('✓ Salvo', false);
+          flashSaved();
+        }
+      }, 5000);
     } catch(e) {
+      isSaving = false;
       console.error('Erro ao salvar:', e.code, e.message);
-      setStatus('⚠️ Erro ao salvar — tente novamente', true);
-    } finally {
-      setTimeout(() => { isSaving = false; }, 2000);
+      if (e.code === 'unavailable' || (e.message && e.message.includes('offline'))) {
+        setStatus('📵 Sem conexão — tentando reconectar…', true);
+        firebaseReady = false;
+        retryTimer = setTimeout(conectarFirebase, 3000);
+      } else {
+        setStatus('⚠️ Erro ao salvar: ' + (e.code || e.message), true);
+      }
     }
   }, 800);
 }
