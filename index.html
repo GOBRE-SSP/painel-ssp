@@ -729,12 +729,7 @@
 // FIREBASE SETUP
 // ═══════════════════════════════════════════════════════
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
-import {
-  getFirestore,
-  enableIndexedDbPersistence,
-  doc, setDoc, onSnapshot,
-  CACHE_SIZE_UNLIMITED
-} from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
+import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCFQm4fbR4m4zM4zN-L0ovXx35SJQDTVPk",
@@ -747,14 +742,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
-
-// Habilita cache offline (funciona em celular mesmo sem internet)
-try {
-  await enableIndexedDbPersistence(db);
-} catch(e) {
-  // já habilitado ou não suportado — não é erro crítico
-}
-
 // ═══════════════════════════════════════════════════════
 // DATA
 // ═══════════════════════════════════════════════════════
@@ -921,86 +908,60 @@ function ensureDefaults() {
 // (executed at bottom of script after all functions defined)
 
 // ─── STEP 2: Firebase real-time sync ───
-const STATE_DOC   = doc(db, 'painel_ssp', 'state');
-const SESSION_ID  = Math.random().toString(36).slice(2);
-let isSaving      = false;
-let firstLoad     = true;
-let unsubscribe   = null;
+const STATE_DOC  = doc(db, 'painel_ssp', 'state');
+const SESSION_ID = Math.random().toString(36).slice(2);
+let isSaving     = false;
+let firstLoad    = true;
+let unsubscribe  = null;
+let retryTimer   = null;
 
 function conectarFirebase() {
-  // Cancel any existing listener before creating a new one
-  if (unsubscribe) unsubscribe();
+  clearTimeout(retryTimer);
+  if (unsubscribe) { try { unsubscribe(); } catch(e){} }
+
+  setStatus('⏳ Conectando…', false);
 
   unsubscribe = onSnapshot(
     STATE_DOC,
-    { includeMetadataChanges: true },
     (snap) => {
-      // fromCache = true means we got local cached data, not server
-      const fromCache = snap.metadata.fromCache;
-      const hasPendingWrites = snap.metadata.hasPendingWrites;
+      // Ignore snapshots triggered by our own writes
+      if (isSaving) return;
 
-      // Update connection status
-      if (!fromCache) {
-        firebaseReady = true;
-        if (!isSaving) setStatus('🟢 Conectado', false);
-      } else {
-        // Got cache — still try to connect
-        setStatus('⏳ Sincronizando…', false);
+      firebaseReady = true;
+
+      if (snap.exists()) {
+        const remote = snap.data();
+        Object.keys(remote).forEach(pid => {
+          if (pid === '__meta') return;
+          data[pid] = { ...defaultRecord(), ...remote[pid] };
+        });
+        ensureDefaults();
       }
-
-      // Skip processing if no document exists yet
-      if (!snap.exists()) {
-        if (firstLoad) { firstLoad = false; }
-        return;
-      }
-
-      // Skip re-render if this is our own pending write
-      if (hasPendingWrites || isSaving) return;
-
-      const remote = snap.data();
-
-      // Merge remote into local
-      Object.keys(remote).forEach(pid => {
-        if (pid === '__meta') return;
-        data[pid] = { ...defaultRecord(), ...remote[pid] };
-      });
-      ensureDefaults();
 
       if (firstLoad) {
         firstLoad = false;
         setStatus('🟢 Conectado', false);
         render();
-      } else if (!fromCache) {
-        // Real server update from another user
-        setStatus('🔄 Atualizado por outro usuário', false);
+      } else {
+        setStatus('🔄 Atualizado', false);
         render();
-        setTimeout(() => setStatus('🟢 Conectado', false), 3000);
+        setTimeout(() => setStatus('🟢 Conectado', false), 2000);
       }
     },
     (err) => {
-      console.warn('Firestore error:', err.code, err.message);
       firebaseReady = false;
+      console.warn('Firebase:', err.code, err.message);
 
       if (err.code === 'permission-denied') {
-        setStatus('⛔ Regras do Firestore bloqueando — veja o console.firebase.google.com', true);
-      } else if (
-        err.code === 'unavailable' ||
-        err.code === 'failed-precondition' ||
-        err.message.toLowerCase().includes('offline') ||
-        err.message.toLowerCase().includes('network')
-      ) {
-        setStatus('📵 Sem conexão — tentando reconectar…', true);
-        // Retry after 8 seconds
-        setTimeout(conectarFirebase, 8000);
+        setStatus('⛔ Sem permissão — verifique as regras do Firestore', true);
       } else {
-        setStatus('⚠️ Erro: ' + err.code, true);
-        setTimeout(conectarFirebase, 15000);
+        setStatus('📵 Sem conexão — tentando em 8s…', true);
+        retryTimer = setTimeout(conectarFirebase, 8000);
       }
     }
   );
 }
 
-// Start connection
 conectarFirebase();
 
 // ═══════════════════════════════════════════════════════
@@ -1016,18 +977,11 @@ async function saveState() {
       await setDoc(STATE_DOC, payload, { merge: true });
       setStatus('✓ Salvo — ' + new Date().toLocaleTimeString('pt-BR'), false);
       flashSaved();
-      firebaseReady = true;
     } catch(e) {
-      console.error('Erro ao salvar:', e);
-      if (e.code === 'unavailable' || e.message.toLowerCase().includes('offline')) {
-        setStatus('📵 Sem conexão — reconectando…', true);
-        firebaseReady = false;
-        setTimeout(conectarFirebase, 3000);
-      } else {
-        setStatus('⚠️ Erro ao salvar: ' + e.message, true);
-      }
+      console.error('Erro ao salvar:', e.code, e.message);
+      setStatus('⚠️ Erro ao salvar — tente novamente', true);
     } finally {
-      setTimeout(() => { isSaving = false; }, 2500);
+      setTimeout(() => { isSaving = false; }, 2000);
     }
   }, 800);
 }
