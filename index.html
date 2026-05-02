@@ -729,7 +729,7 @@
 // FIREBASE SETUP
 // ═══════════════════════════════════════════════════════
 import { initializeApp }                            from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
-import { getFirestore, doc, setDoc, onSnapshot }   from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCFQm4fbR4m4zM4zN-L0ovXx35SJQDTVPk",
@@ -908,20 +908,58 @@ function ensureDefaults() {
 // ─── STEP 1: Render immediately with empty editable fields ───
 // (called after all functions are defined — see bottom of script)
 
-// ─── STEP 2: Connect Firebase and merge data when ready ───
+// ─── STEP 2: Connect Firebase real-time listener ───
 const STATE_DOC = doc(db, 'painel_ssp', 'state');
 
+// Unique session ID — distinguishes this browser tab from others
+const SESSION_ID = Math.random().toString(36).slice(2);
+let isSaving = false; // true while we are writing to Firebase
+
 onSnapshot(STATE_DOC, (snap) => {
-  if (snap.exists()) {
-    const remote = snap.data();
-    Object.keys(remote).forEach(pid => {
-      data[pid] = { ...defaultRecord(), ...remote[pid] };
-    });
-    ensureDefaults();
-  }
   firebaseReady = true;
-  setStatus('🟢 Conectado', false);
-  render(); // re-render with Firebase data merged in
+
+  if (!snap.exists()) {
+    setStatus('🟢 Conectado', false);
+    return;
+  }
+
+  const remote = snap.data();
+
+  // If this update was triggered by our own save, skip re-render
+  // to avoid flickering and losing the user's current input
+  if (isSaving) {
+    setStatus('🟢 Conectado', false);
+    return;
+  }
+
+  // Another user changed something — merge only the fields that differ
+  let changed = false;
+  Object.keys(remote).forEach(pid => {
+    if (pid === '__meta') return; // skip metadata field
+    const remoteRec = { ...defaultRecord(), ...remote[pid] };
+    const localRec  = data[pid] || defaultRecord();
+
+    // Compare field by field
+    const fields = Object.keys(remoteRec);
+    for (const f of fields) {
+      if (remoteRec[f] !== localRec[f]) {
+        changed = true;
+        break;
+      }
+    }
+    data[pid] = remoteRec;
+  });
+
+  ensureDefaults();
+
+  if (changed) {
+    setStatus('🔄 Atualizado por outro usuário', false);
+    render();
+    setTimeout(() => setStatus('🟢 Conectado', false), 2500);
+  } else {
+    setStatus('🟢 Conectado', false);
+  }
+
 }, (err) => {
   console.warn('Firestore offline ou não configurado:', err.message);
   setStatus('⚠️ Offline — dados locais apenas', true);
@@ -935,18 +973,49 @@ async function saveState() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     if (!firebaseReady) {
-      setStatus('⚠️ Sem conexão — dado salvo só localmente', true);
+      setStatus('⚠️ Sem conexão — Firebase não disponível', true);
       return;
     }
     try {
+      isSaving = true;
       setStatus('💾 Salvando…', false);
-      await setDoc(STATE_DOC, data, { merge: true });
+      // Save all data plus a metadata field to identify our session
+      const payload = { ...data, __meta: { session: SESSION_ID, ts: Date.now() } };
+      await setDoc(STATE_DOC, payload, { merge: true });
       setStatus('✓ Salvo — ' + new Date().toLocaleTimeString('pt-BR'), false);
       flashSaved();
     } catch(e) {
       setStatus('⚠️ Erro ao salvar: ' + e.message, true);
+    } finally {
+      // Release isSaving after a short delay to let onSnapshot fire first
+      setTimeout(() => { isSaving = false; }, 1500);
     }
   }, 600);
+}
+
+// ═══════════════════════════════════════════════════════
+// FIREBASE: LOAD INITIAL DATA on first connect
+// ═══════════════════════════════════════════════════════
+async function loadInitialData() {
+  try {
+    const snap = await getDoc(STATE_DOC);
+    if (snap.exists()) {
+      const remote = snap.data();
+      Object.keys(remote).forEach(pid => {
+        if (pid === '__meta') return;
+        data[pid] = { ...defaultRecord(), ...remote[pid] };
+      });
+      ensureDefaults();
+      firebaseReady = true;
+      setStatus('🟢 Conectado', false);
+      render(); // re-render with real Firebase data
+    } else {
+      firebaseReady = true;
+      setStatus('🟢 Conectado', false);
+    }
+  } catch(e) {
+    setStatus('⚠️ Erro ao carregar dados: ' + e.message, true);
+  }
 }
 
 function setStatus(msg, isErr) {
@@ -1402,6 +1471,7 @@ ensureDefaults();
 populateTemaFilter();
 render();
 setStatus('⏳ Sincronizando com Firebase…', false);
+loadInitialData(); // fetch current data immediately on load
 </script>
 
 </body>
