@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Acompanhamento de Processos — SSP</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  :root {
+    --navy: #0d2b4e;
+    --navy2: #163c6a;
+    --blue: #1e6fb5;
+    --blue-light: #dbeafe;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-900: #0f172a;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --yellow: #ca8a04;
+    --yellow-light: #fef9c3;
+    --orange: #ea580c;
+    --orange-light: #ffedd5;
+    --purple-light: #f3e8ff;
+    --purple: #7c3aed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-900);
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 0 20px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-logo {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  header h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+  header p { font-size: 11px; opacity: 0.6; }
+  .header-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* ─── FILTERS ─── */
+  .filters-wrap {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 12px 20px;
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .filters-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .filter-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .filter-group input,
+  .filter-group select {
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--gray-700);
+    background: var(--gray-50);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .filter-group input:focus,
+  .filter-group select:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(30,111,181,0.12);
+  }
+  .filter-group input { width: 220px; }
+  .filter-group select { min-width: 140px; }
+  .btn-clear {
+    background: none;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--gray-500);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-clear:hover { background: var(--gray-100); color: var(--gray-700); }
+
+  .filters-info {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .total-badge {
+    background: var(--navy);
+    color: white;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* ─── MAIN TABLE AREA ─── */
+  .main { padding: 16px 20px; }
+
+  /* ─── GROUP ─── */
+  .group {
+    margin-bottom: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .group-header {
+    background: var(--navy);
+    color: white;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .group-header:hover { background: var(--navy2); }
+  .group-header-left { display: flex; align-items: center; gap: 10px; }
+  .group-icon { font-size: 16px; }
+  .group-title { font-size: 13px; font-weight: 700; }
+  .group-count {
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 1px 9px;
+    font-size: 11px;
+  }
+  .chevron { transition: transform 0.2s; font-size: 11px; opacity: 0.7; }
+  .group-header.open .chevron { transform: rotate(90deg); }
+
+  .group-body { display: none; background: white; }
+  .group-body.visible { display: block; }
+
+  /* ─── TABLE ─── */
+  .proc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .proc-table thead tr {
+    background: var(--gray-50);
+    border-bottom: 2px solid var(--gray-200);
+  }
+  .proc-table th {
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--gray-500);
+    white-space: nowrap;
+  }
+  .proc-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+  }
+  .proc-table tr:last-child td { border-bottom: none; }
+  .proc-table tr:hover td { background: #f0f6ff; }
+
+  /* Row types */
+  .row-principal td:first-child { border-left: 3px solid var(--navy); }
+  .row-vinculado td:first-child { border-left: 3px solid var(--blue); }
+  .row-vinculado td { background: #fafbfc; }
+
+  /* Level indicator */
+  .level-indent { display: flex; align-items: center; gap: 6px; }
+  .level-arrow { color: var(--gray-300); font-size: 13px; flex-shrink: 0; }
+
+  /* Number col */
+  .proc-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--blue);
+    white-space: nowrap;
+  }
+
+  /* Type badge */
+  .type-badge {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  .t-principal { background: var(--blue-light); color: #1e40af; }
+  .t-aditivo   { background: var(--yellow-light); color: #854d0e; }
+  .t-execucao  { background: var(--green-light); color: #14532d; }
+  .t-ata       { background: var(--purple-light); color: #5b21b6; }
+  .t-dispensa  { background: var(--red-light); color: #7f1d1d; }
+  .t-adesao    { background: #e0f2fe; color: #075985; }
+  .t-cessao    { background: #fce7f3; color: #9d174d; }
+  .t-medicao   { background: #fff7ed; color: #9a3412; }
+  .t-locacao   { background: #ecfdf5; color: #065f46; }
+  .t-outro     { background: var(--gray-100); color: var(--gray-500); }
+
+  /* Concluído badge */
+  .concluded { color: var(--green); font-size: 12px; }
+
+  /* ─── EDITABLE CELLS ─── */
+  .editable-cell {
+    position: relative;
+  }
+  .cell-display {
+    min-height: 22px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    word-break: break-word;
+    min-width: 80px;
+  }
+  .cell-display:hover {
+    background: var(--blue-light);
+  }
+  .cell-display.empty {
+    color: var(--gray-300);
+    font-style: italic;
+    font-size: 11px;
+  }
+  .cell-display .edit-icon {
+    opacity: 0;
+    font-size: 10px;
+    color: var(--blue);
+    flex-shrink: 0;
+  }
+  .cell-display:hover .edit-icon { opacity: 1; }
+
+  .cell-input {
+    display: none;
+    width: 100%;
+    border: 1.5px solid var(--blue);
+    border-radius: 4px;
+    padding: 4px 7px;
+    font-size: 12px;
+    font-family: inherit;
+    background: white;
+    color: var(--gray-900);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(30,111,181,0.15);
+    resize: none;
+  }
+  .cell-input.active { display: block; }
+
+  /* Setor select */
+  .setor-select {
+    border: 1.5px solid var(--blue);
+    border-radius: 4px;
+    padding: 4px 7px;
+    font-size: 12px;
+    font-family: inherit;
+    background: white;
+    color: var(--gray-900);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(30,111,181,0.15);
+    cursor: pointer;
+    display: none;
+  }
+  .setor-select.active { display: block; }
+
+  .setor-badge {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 600;
+    background: #e0f2fe;
+    color: #075985;
+    white-space: nowrap;
+  }
+
+  /* Contrato / Empenho / Prioridade checkboxes */
+  .check-col { text-align: center; }
+  .check-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Generic checkbox */
+  .status-check {
+    appearance: none;
+    width: 20px; height: 20px;
+    border: 2px solid var(--gray-300);
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    background: white;
+    flex-shrink: 0;
+    display: block;
+  }
+  .status-check:checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .status-check:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .status-check:hover:not(:checked) {
+    border-color: var(--blue);
+    background: var(--blue-light);
+  }
+
+  /* Priority checkbox — red theme */
+  .priority-check {
+    appearance: none;
+    width: 22px; height: 22px;
+    border: 2.5px solid #fca5a5;
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    background: white;
+    flex-shrink: 0;
+    display: block;
+  }
+  .priority-check:checked {
+    background: var(--red);
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(220,38,38,0.18);
+  }
+  .priority-check:checked::after {
+    content: '!';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .priority-check:hover:not(:checked) {
+    border-color: var(--red);
+    background: var(--red-light);
+  }
+  .priority-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--gray-400);
+    display: none;
+  }
+
+  /* Row highlight when priority is checked */
+  .row-priority td {
+    background: #fff5f5 !important;
+  }
+  .row-priority td:first-child {
+    border-left: 3px solid var(--red) !important;
+  }
+  .row-priority .proc-num { color: var(--red) !important; }
+  .row-priority:hover td { background: #ffe4e4 !important; }
+
+  /* Priority column header */
+  .col-prio {
+    width: 72px;
+    text-align: center;
+  }
+  .th-prio {
+    color: var(--red) !important;
+    background: #fff5f5 !important;
+  }
+
+  /* desc col */
+  .desc-col { max-width: 260px; }
+  .desc-col .desc-text { color: var(--gray-700); line-height: 1.4; }
+  .desc-col .desc-obs {
+    font-size: 10px;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--gray-500);
+    font-size: 14px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  /* ─── SAVE INDICATOR ─── */
+  #saveIndicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--green);
+    color: white;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 200;
+    animation: fadeInOut 2s forwards;
+  }
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(10px); }
+    15% { opacity: 1; transform: translateY(0); }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    header h1 { font-size: 13px; }
+    .filter-group input { width: 160px; }
+    .proc-table th:nth-child(7),
+    .proc-table td:nth-child(7) { display: none; }
+  }
+  @media (max-width: 600px) {
+    .main { padding: 10px; }
+    .filters-wrap { padding: 10px; }
+    .filter-group input { width: 130px; }
+    .proc-table th:nth-child(6),
+    .proc-table td:nth-child(6),
+    .proc-table th:nth-child(8),
+    .proc-table td:nth-child(8) { display: none; }
+  }
+
+  /* col widths */
+  .col-tipo   { width: 100px; }
+  .col-num    { width: 175px; }
+  .col-desc   { }
+  .col-setor  { width: 130px; }
+  .col-pend   { width: 190px; }
+  .col-contr  { width: 80px; text-align: center; }
+  .col-emp    { width: 80px; text-align: center; }
+  .col-acao   { width: 52px; text-align: center; }
+
+  /* Delete button */
+  .btn-delete {
+    background: none;
+    border: 1.5px solid #fca5a5;
+    border-radius: 6px;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: #fca5a5;
+    font-size: 14px;
+    transition: all 0.15s;
+    margin: 0 auto;
+  }
+  .btn-delete:hover {
+    background: var(--red);
+    border-color: var(--red);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  /* ─── CONFIRM MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 300;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.active {
+    opacity: 1; pointer-events: all;
+  }
+  .modal {
+    background: white;
+    border-radius: 12px;
+    padding: 28px 32px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    transform: translateY(16px);
+    transition: transform 0.2s;
+    text-align: center;
+  }
+  .modal-overlay.active .modal { transform: translateY(0); }
+  .modal-icon { font-size: 36px; margin-bottom: 12px; }
+  .modal-title {
+    font-size: 16px; font-weight: 700; color: var(--gray-900);
+    margin-bottom: 8px;
+  }
+  .modal-msg {
+    font-size: 13px; color: var(--gray-500);
+    margin-bottom: 6px; line-height: 1.5;
+  }
+  .modal-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; font-weight: 600; color: var(--blue);
+    background: var(--blue-light); border-radius: 4px;
+    padding: 4px 10px; display: inline-block; margin-bottom: 20px;
+  }
+  .modal-btns { display: flex; gap: 10px; justify-content: center; }
+  .modal-btn-cancel {
+    flex: 1;
+    background: var(--gray-100); border: 1px solid var(--gray-200);
+    border-radius: 8px; padding: 10px 0;
+    font-size: 13px; font-weight: 600; color: var(--gray-600);
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .modal-btn-cancel:hover { background: var(--gray-200); }
+  .modal-btn-confirm {
+    flex: 1;
+    background: var(--red); border: none;
+    border-radius: 8px; padding: 10px 0;
+    font-size: 13px; font-weight: 700; color: white;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .modal-btn-confirm:hover { background: #b91c1c; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="header-logo">🏛️</div>
+    <div>
+      <h1>Painel de Acompanhamento de Processos</h1>
+      <p>Secretaria de Segurança Pública — SSP</p>
+    </div>
+  </div>
+  <div class="header-badge" id="lastSaved">Dados salvos localmente</div>
+</header>
+
+<!-- FILTERS -->
+<div class="filters-wrap">
+  <div class="filters-row">
+    <div class="filter-group">
+      <label>🔍 Buscar</label>
+      <input type="text" id="fBusca" placeholder="Número ou objeto...">
+    </div>
+    <div class="filter-group">
+      <label>Tema</label>
+      <select id="fTema">
+        <option value="">Todos os temas</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Tipo</label>
+      <select id="fTipo">
+        <option value="">Todos os tipos</option>
+        <option value="PRINCIPAL">Principal</option>
+        <option value="ADITIVO">Aditivo</option>
+        <option value="EXECUÇÃO">Execução</option>
+        <option value="ATA">Ata</option>
+        <option value="DISPENSA">Dispensa</option>
+        <option value="ADESÃO">Adesão</option>
+        <option value="CESSÃO">Cessão</option>
+        <option value="LOCAÇÃO">Locação</option>
+        <option value="MEDIÇÃO">Medição</option>
+        <option value="OUTRO">Outro</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Setor Atual</label>
+      <select id="fSetor">
+        <option value="">Todos os setores</option>
+        <option value="DADM">DADM</option>
+        <option value="GOBRE">GOBRE</option>
+        <option value="GLC">GLC</option>
+        <option value="CCON">CCON</option>
+        <option value="CC">CC</option>
+        <option value="DFIN/CGFR">DFIN/CGFR</option>
+        <option value="DFIN/EMPENHO">DFIN/EMPENHO</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Contrato</label>
+      <select id="fContrato">
+        <option value="">Todos</option>
+        <option value="sim">Assinado ✓</option>
+        <option value="nao">Não assinado</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Empenho</label>
+      <select id="fEmpenho">
+        <option value="">Todos</option>
+        <option value="sim">Empenhado ✓</option>
+        <option value="nao">Não empenhado</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label style="color:#dc2626">🔴 Prioridade</label>
+      <select id="fPrioridade">
+        <option value="">Todos</option>
+        <option value="sim">Prioritários !</option>
+        <option value="nao">Sem prioridade</option>
+      </select>
+    </div>
+    <button class="btn-clear" onclick="clearFilters()">✕ Limpar filtros</button>
+  </div>
+  <div class="filters-info">
+    <span>Exibindo <strong id="visibleCount">0</strong> de <strong id="totalCount">0</strong> processos</span>
+    <span class="total-badge" id="groupCount">0 grupos</span>
+    <span style="color: var(--gray-400)">| Clique em qualquer campo para editar</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="mainContent"></div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-icon">🗑️</div>
+    <div class="modal-title">Excluir processo?</div>
+    <div class="modal-msg">Você está prestes a remover o processo:</div>
+    <div class="modal-num" id="modalNum">—</div>
+    <div class="modal-msg" style="margin-top:-12px;margin-bottom:20px">Esta ação não poderá ser desfeita.</div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-btn-confirm" onclick="confirmDelete()">Sim, excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="saveIndicator">✓ Salvo</div>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════
+// FIREBASE SETUP
+// ═══════════════════════════════════════════════════════
+import { initializeApp }                            from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
+import { getFirestore, doc, setDoc, onSnapshot }   from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyCFQm4fbR4m4zM4zN-L0ovXx35SJQDTVPk",
+  authDomain:        "demandas-dadm.firebaseapp.com",
+  projectId:         "demandas-dadm",
+  storageBucket:     "demandas-dadm.firebasestorage.app",
+  messagingSenderId: "114585997653",
+  appId:             "1:114585997653:web:992b369bc92d8989a61fdc"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const SETORES = ['DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO'];
+const TIPOS   = ['PRINCIPAL','ADITIVO','EXECUÇÃO','ATA','DISPENSA','ADESÃO','CESSÃO','LOCAÇÃO','MEDIÇÃO','OUTRO'];
+
+const GRUPOS_BASE = [
+  {
+    id:'g1', icone:'🏗️', tema:'Manutenção Predial',
+    processos:[
+      {id:'p1',  tipo:'PRINCIPAL', num:'00027.005168/2025-70', desc:'Manutenção Predial — processo principal'},
+      {id:'p2',  tipo:'EXECUÇÃO',  num:'00027.008809/2025-48', desc:'Exec. Ata Manut. Predial — Monte Claro'},
+      {id:'p3',  tipo:'ADITIVO',   num:'00027.001921/2026-39', desc:'Aditivo de valor — Monte Claro'},
+      {id:'p4',  tipo:'ADESÃO',    num:'00027.002855/2026-14', desc:'Nova adesão 2026 — IMEPI/Desenvolva/Pavicon/Monte Claro'},
+      {id:'p5',  tipo:'EXECUÇÃO',  num:'00027.008811/2025-17', desc:'Exec. Ata Manut. Predial — Assertiva'},
+      {id:'p6',  tipo:'EXECUÇÃO',  num:'00027.002490/2026-28', desc:'Processo de execução — Assertiva (2026)'},
+      {id:'p7',  tipo:'ADITIVO',   num:'00027.001663/2026-91', desc:'Aditivo de valor — Assertiva'},
+      {id:'p8',  tipo:'ADESÃO',    num:'00027.002149/2026-72', desc:'Nova adesão (2026) — Assertiva'},
+      {id:'p9',  tipo:'ATA',       num:'00027.001615/2026-01', desc:"Limpeza caixas d'água, fossas, desinsetização, roço, poda (Ata IMEPI)"},
+    ]
+  },
+  {
+    id:'g2', icone:'❄️', tema:'Ar-Condicionado',
+    processos:[
+      {id:'p10', tipo:'ATA',       num:'00027.004575/2025-60', desc:'Aquisição ar-condicionado — ATA'},
+      {id:'p11', tipo:'ADITIVO',   num:'00027.005736/2025-32', desc:'Aquisição ar-condicionado — ADITIVO'},
+      {id:'p12', tipo:'DISPENSA',  num:'00027.006514/2025-37', desc:'Aquisição ar-condicionado — DISPENSA'},
+      {id:'p13', tipo:'ADESÃO',    num:'00027.002351/2025-13', desc:'Manutenção ar — Nova Adesão (Concretizar)'},
+    ]
+  },
+  {
+    id:'g3', icone:'🪑', tema:'Móveis e Mobiliário',
+    processos:[
+      {id:'p14', tipo:'ATA',       num:'00027.004005/2025-70', desc:'Ata móveis — processo principal (25% aditivo)'},
+      {id:'p15', tipo:'ADITIVO',   num:'00027.005219/2025-63', desc:'Aditivo contrato nº 60'},
+      {id:'p16', tipo:'ADITIVO',   num:'00027.005224/2025-76', desc:'Aditivo contrato nº 61'},
+      {id:'p17', tipo:'DISPENSA',  num:'00027.006289/2025-39', desc:'DFD Móveis Planejados DG'},
+      {id:'p18', tipo:'ATA',       num:'00028.046579/2025-13', desc:'Ata móveis DGO'},
+      {id:'p19', tipo:'OUTRO',     num:'00027.009264/2025-97', desc:'DFD beliche — Ata DSUSP'},
+      {id:'p20', tipo:'DISPENSA',  num:'00027.008077/2025-96', desc:'Dispensa beliche e colchão'},
+    ]
+  },
+  {
+    id:'g4', icone:'🎨', tema:'Comunicação Visual',
+    processos:[
+      {id:'p21', tipo:'ATA',       num:'00027.008237/2024-16', desc:'Ata Comunicação Visual — processo principal'},
+      {id:'p22', tipo:'ADITIVO',   num:'00027.005943/2025-97', desc:'Comunicação Visual — ADITIVO (Empresa MAX)'},
+      {id:'p23', tipo:'EXECUÇÃO',  num:'00027.003047/2026-74', desc:'Processo de execução (Empresa MAX)'},
+      {id:'p24', tipo:'OUTRO',     num:'00027.007611/2025-47', desc:'Novo Contrato Com. Visual 2026 — Empresa Max'},
+      {id:'p25', tipo:'OUTRO',     num:'00027.002227/2026-39', desc:'Novo Contrato Com. Visual 2026 — Empresa Mega'},
+      {id:'p26', tipo:'OUTRO',     num:'00027.008105/2025-75', desc:'Placa de inauguração / placa de porta e outros'},
+    ]
+  },
+  {
+    id:'g5', icone:'🔥', tema:'Extintores e Segurança',
+    processos:[
+      {id:'p27', tipo:'ATA',       num:'00027.005996/2024-27', desc:'Ata extintores'},
+    ]
+  },
+  {
+    id:'g6', icone:'🏠', tema:'BEPI — Contratos de Serviços',
+    processos:[
+      {id:'p28', tipo:'ADITIVO',   num:'00027.009103/2024-12', desc:'Aditivo qualitativo BEPI'},
+      {id:'p29', tipo:'ADITIVO',   num:'00027.008029/2025-06', desc:'Aditivo de valor BEPI'},
+      {id:'p30', tipo:'ADITIVO',   num:'00027.000596/2026-97', desc:'Aditivo de vigência BEPI'},
+    ]
+  },
+  {
+    id:'g7', icone:'📦', tema:'Locação EMRI / LOCABOX',
+    processos:[
+      {id:'p31', tipo:'ATA',       num:'00027.002178/2026-34', desc:'Locação EMRI pré-fabricados climatizados (IMEPI / LOCABOX)'},
+    ]
+  },
+  {
+    id:'g8', icone:'⚡', tema:'Gerador de Energia',
+    processos:[
+      {id:'p32', tipo:'ATA',       num:'00027.002337/2026-09', desc:'Ata gerador'},
+      {id:'p33', tipo:'OUTRO',     num:'00027.000614/2026-31', desc:'Emergencial gerador'},
+    ]
+  },
+  {
+    id:'g9', icone:'☀️', tema:'Energia Fotovoltaica',
+    processos:[
+      {id:'p34', tipo:'ATA',       num:'00027.005637/2025-51', desc:'Ata energia fotovoltaica'},
+    ]
+  },
+  {
+    id:'g10', icone:'💼', tema:'Patrimônio e Gestão de Ativos',
+    processos:[
+      {id:'p35', tipo:'PRINCIPAL', num:'00027.001099/2026-14', desc:'Gerenciamento de ativos — Patrimônio'},
+      {id:'p36', tipo:'OUTRO',     num:'00027005943/2025-97',  desc:'Credenciamento de Empresas'},
+    ]
+  },
+  {
+    id:'g11', icone:'🏘️', tema:'Locação de Imóveis e Unidades',
+    processos:[
+      {id:'p37', tipo:'LOCAÇÃO',   num:'00027.006958/2025-72', desc:'Locação CASA X (TJ)'},
+      {id:'p38', tipo:'LOCAÇÃO',   num:'00027.003552/2025-38', desc:'Locação unidade PF — Picos'},
+      {id:'p39', tipo:'LOCAÇÃO',   num:'00027.010008/2025-42', desc:'Locação unidade Timon (Zanata)'},
+    ]
+  },
+  {
+    id:'g12', icone:'🤝', tema:'Cessão de Imóveis / Cooperação',
+    processos:[
+      {id:'p40', tipo:'CESSÃO',    num:'00027.010480/2025-85', desc:'Cessão da CODEVASF'},
+      {id:'p41', tipo:'CESSÃO',    num:'00027.005048/2025-72', desc:'Cessão SEFAZ para CIA Piracuruca'},
+      {id:'p42', tipo:'CESSÃO',    num:'00027.005619/2025-79', desc:'Cessão Altos'},
+    ]
+  },
+  {
+    id:'g13', icone:'🎯', tema:'Stand de Tiros — CEFAP / ACADEPOL',
+    processos:[
+      {id:'p43', tipo:'PRINCIPAL', num:'00027.008544/2025-88', desc:'Stand de tiros (CEFAP e ACADEPOL)'},
+    ]
+  },
+  {
+    id:'g14', icone:'⚖️', tema:'Desapropriação — Bom Jesus',
+    processos:[
+      {id:'p44', tipo:'PRINCIPAL', num:'00027.004660/2025-28', desc:'Desapropriação Bom Jesus'},
+    ]
+  },
+  {
+    id:'g15', icone:'🏛️', tema:'Construção 30° BPM — Barras-PI',
+    processos:[
+      {id:'p45', tipo:'ADITIVO',   num:'00027.002306/2026-40', desc:'Prorrogação prazo — Contrato nº 31/2025', obs:'HIGILAR CONSTRUÇÕES LTDA — Construção 30° BPM Barras-PI'},
+    ]
+  },
+  {
+    id:'g16', icone:'👥', tema:'CONVIVE',
+    processos:[
+      {id:'p46', tipo:'PRINCIPAL', num:'00027.003923/2025-81', desc:'CONVIVE'},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let data      = {};
+let groupOpen = {};
+let pendingDeleteId = null;
+let saveTimer = null;
+let firebaseReady = false;
+
+// ═══════════════════════════════════════════════════════
+// DEFAULTS — always initialize all processes from base data
+// ═══════════════════════════════════════════════════════
+function defaultRecord() {
+  return { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:'', deleted:false };
+}
+
+function ensureDefaults() {
+  GRUPOS_BASE.forEach(g => g.processos.forEach(p => {
+    if (!data[p.id]) data[p.id] = defaultRecord();
+    const d = data[p.id];
+    if (d.prioridade === undefined) d.prioridade = false;
+    if (d.desc      === undefined) d.desc       = '';
+    if (d.tipo      === undefined) d.tipo       = '';
+    if (d.deleted   === undefined) d.deleted    = false;
+  }));
+}
+
+// ─── STEP 1: Render immediately with empty editable fields ───
+// (called after all functions are defined — see bottom of script)
+
+// ─── STEP 2: Connect Firebase and merge data when ready ───
+const STATE_DOC = doc(db, 'painel_ssp', 'state');
+
+onSnapshot(STATE_DOC, (snap) => {
+  if (snap.exists()) {
+    const remote = snap.data();
+    Object.keys(remote).forEach(pid => {
+      data[pid] = { ...defaultRecord(), ...remote[pid] };
+    });
+    ensureDefaults();
+  }
+  firebaseReady = true;
+  setStatus('🟢 Conectado', false);
+  render(); // re-render with Firebase data merged in
+}, (err) => {
+  console.warn('Firestore offline ou não configurado:', err.message);
+  setStatus('⚠️ Offline — dados locais apenas', true);
+  firebaseReady = false;
+});
+
+// ═══════════════════════════════════════════════════════
+// FIREBASE: SAVE (debounced 600ms)
+// ═══════════════════════════════════════════════════════
+async function saveState() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    if (!firebaseReady) {
+      setStatus('⚠️ Sem conexão — dado salvo só localmente', true);
+      return;
+    }
+    try {
+      setStatus('💾 Salvando…', false);
+      await setDoc(STATE_DOC, data, { merge: true });
+      setStatus('✓ Salvo — ' + new Date().toLocaleTimeString('pt-BR'), false);
+      flashSaved();
+    } catch(e) {
+      setStatus('⚠️ Erro ao salvar: ' + e.message, true);
+    }
+  }, 600);
+}
+
+function setStatus(msg, isErr) {
+  const el = document.getElementById('lastSaved');
+  el.textContent = msg;
+  el.style.color = isErr ? '#fca5a5' : 'rgba(255,255,255,0.8)';
+}
+
+function flashSaved() {
+  const ind = document.getElementById('saveIndicator');
+  ind.style.display = 'block';
+  ind.style.animation = 'none';
+  setTimeout(() => { ind.style.animation = 'fadeInOut 2s forwards'; }, 10);
+  setTimeout(() => { ind.style.display = 'none'; }, 2100);
+}
+
+// ═══════════════════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════════════════
+function getFilters() {
+  return {
+    busca:      document.getElementById('fBusca').value.trim().toLowerCase(),
+    tema:       document.getElementById('fTema').value,
+    tipo:       document.getElementById('fTipo').value,
+    setor:      document.getElementById('fSetor').value,
+    contrato:   document.getElementById('fContrato').value,
+    empenho:    document.getElementById('fEmpenho').value,
+    prioridade: document.getElementById('fPrioridade').value,
+  };
+}
+
+function matchProc(p, f) {
+  const d = data[p.id] || {};
+  if (d.deleted) return false;
+  if (f.busca && !p.num.toLowerCase().includes(f.busca) && !(d.desc||p.desc).toLowerCase().includes(f.busca)) return false;
+  if (f.tipo  && (d.tipo||p.tipo) !== f.tipo) return false;
+  if (f.setor && d.setor !== f.setor) return false;
+  if (f.contrato   === 'sim' && !d.contrato)   return false;
+  if (f.contrato   === 'nao' &&  d.contrato)   return false;
+  if (f.empenho    === 'sim' && !d.empenho)    return false;
+  if (f.empenho    === 'nao' &&  d.empenho)    return false;
+  if (f.prioridade === 'sim' && !d.prioridade) return false;
+  if (f.prioridade === 'nao' &&  d.prioridade) return false;
+  return true;
+}
+
+function clearFilters() {
+  ['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  render();
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function typeBadge(tipo) {
+  const map = {
+    'PRINCIPAL':'t-principal','ADITIVO':'t-aditivo','EXECUÇÃO':'t-execucao',
+    'ATA':'t-ata','DISPENSA':'t-dispensa','ADESÃO':'t-adesao',
+    'CESSÃO':'t-cessao','LOCAÇÃO':'t-locacao','MEDIÇÃO':'t-medicao','OUTRO':'t-outro'
+  };
+  return `<span class="type-badge ${map[tipo]||'t-outro'}">${tipo}</span>`;
+}
+
+function render() {
+  const f = getFilters();
+  const container = document.getElementById('mainContent');
+  container.innerHTML = '';
+
+  let totalVisible = 0, groupsVisible = 0;
+
+  GRUPOS_BASE.forEach((g, gi) => {
+    if (f.tema && g.id !== f.tema) return;
+    const matchedProcs = g.processos.filter(p => matchProc(p, f));
+    if (matchedProcs.length === 0) return;
+
+    groupsVisible++;
+    totalVisible += matchedProcs.length;
+
+    const isOpen = groupOpen[g.id] !== false;
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'group';
+    groupDiv.dataset.gid = g.id;
+
+    let rowsHtml = '';
+    matchedProcs.forEach((p) => {
+      const isFirstInGroup = g.processos.indexOf(p) === 0;
+      const d = data[p.id];
+      const isPrio = !!d.prioridade;
+      let rowClass = isFirstInGroup ? 'row-principal' : 'row-vinculado';
+      if (isPrio) rowClass += ' row-priority';
+
+      const tipoVal = d.tipo || p.tipo;
+      const tipoSelectHtml = `<select class="setor-select" id="tipo_sel_${p.id}" onchange="window._saveTipo('${p.id}',this)" onblur="window._cancelTipo('${p.id}',this)">
+        ${TIPOS.map(t=>`<option value="${t}" ${tipoVal===t?'selected':''}>${t}</option>`).join('')}
+      </select>`;
+      const tipoDisplayHtml = `<div class="cell-display" id="tipo_disp_${p.id}" onclick="window._startEditTipo('${p.id}',this)">${typeBadge(tipoVal)}<span class="edit-icon">✎</span></div>`;
+
+      const descVal = d.desc || p.desc;
+      const obsVal  = p.obs  || '';
+      const descDisplayHtml = `<div class="cell-display" id="desc_disp_${p.id}" onclick="window._startEditDesc('${p.id}',this)" title="${descVal}">${descVal}<span class="edit-icon">✎</span></div>`;
+      const descInputHtml   = `<textarea class="cell-input" id="desc_input_${p.id}" rows="2"
+        onblur="window._saveDesc('${p.id}',this)"
+        onkeydown="if(event.key==='Escape')window._cancelDesc('${p.id}',this)"
+      >${descVal}</textarea>`;
+
+      const displaySetorDiv = d.setor
+        ? `<div class="cell-display" onclick="window._startEditSetor('${p.id}',this)"><span class="setor-badge">${d.setor}</span><span class="edit-icon">✎</span></div>`
+        : `<div class="cell-display empty" onclick="window._startEditSetor('${p.id}',this)">— <span class="edit-icon">✎</span></div>`;
+      const setorSelectHtml = `<select class="setor-select" id="ss_${p.id}" onchange="window._saveSetor('${p.id}',this)" onblur="window._cancelSetor('${p.id}',this)">
+        <option value="">-- Setor --</option>
+        ${SETORES.map(s=>`<option value="${s}" ${d.setor===s?'selected':''}>${s}</option>`).join('')}
+      </select>`;
+
+      const pendValue = d.pendencia || '';
+      const pendDisplay = pendValue
+        ? `<div class="cell-display" onclick="window._startEditPend('${p.id}',this)" title="${pendValue}">${pendValue}<span class="edit-icon">✎</span></div>`
+        : `<div class="cell-display empty" onclick="window._startEditPend('${p.id}',this)">— <span class="edit-icon">✎</span></div>`;
+
+      rowsHtml += `<tr class="${rowClass}" data-pid="${p.id}">
+        <td class="col-prio check-col">
+          <div class="check-wrap">
+            <input type="checkbox" class="priority-check" id="prio_${p.id}"
+              ${d.prioridade?'checked':''} title="Marcar como prioritário"
+              onchange="window._saveCheck('${p.id}','prioridade',this.checked); window._togglePrioRow(this)">
+          </div>
+        </td>
+        <td class="col-tipo editable-cell" id="tipo_td_${p.id}">
+          ${tipoDisplayHtml}${tipoSelectHtml}
+        </td>
+        <td class="col-num">
+          <div class="level-indent">
+            ${isFirstInGroup ? '' : '<span class="level-arrow">↳</span>'}
+            <span class="proc-num">${p.num}</span>
+          </div>
+        </td>
+        <td class="col-desc editable-cell desc-col" id="desc_td_${p.id}">
+          ${descDisplayHtml}${descInputHtml}
+          ${obsVal ? `<div class="desc-obs">${obsVal}</div>` : ''}
+        </td>
+        <td class="col-setor editable-cell" id="setor_td_${p.id}">
+          ${displaySetorDiv}${setorSelectHtml}
+        </td>
+        <td class="col-pend editable-cell" id="pend_td_${p.id}">
+          ${pendDisplay}
+          <textarea class="cell-input" id="pend_input_${p.id}" rows="2"
+            onblur="window._savePend('${p.id}',this)"
+            onkeydown="if(event.key==='Escape')window._cancelPend('${p.id}',this)"
+          >${pendValue}</textarea>
+        </td>
+        <td class="col-contr check-col">
+          <div class="check-wrap">
+            <input type="checkbox" class="status-check" id="contr_${p.id}"
+              ${d.contrato?'checked':''} title="Contrato assinado"
+              onchange="window._saveCheck('${p.id}','contrato',this.checked)">
+          </div>
+        </td>
+        <td class="col-emp check-col">
+          <div class="check-wrap">
+            <input type="checkbox" class="status-check" id="emp_${p.id}"
+              ${d.empenho?'checked':''} title="Empenho realizado"
+              onchange="window._saveCheck('${p.id}','empenho',this.checked)">
+          </div>
+        </td>
+        <td class="col-acao">
+          <button class="btn-delete" title="Excluir processo" onclick="window._askDelete('${p.id}','${p.num}')">🗑</button>
+        </td>
+      </tr>`;
+    });
+
+    groupDiv.innerHTML = `
+      <div class="group-header ${isOpen?'open':''}" onclick="window._toggleGroup('${g.id}',this)">
+        <div class="group-header-left">
+          <span class="group-icon">${g.icone}</span>
+          <span class="group-title">${g.tema}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="group-count">${matchedProcs.length} processo${matchedProcs.length>1?'s':''}</span>
+          <span class="chevron">▶</span>
+        </div>
+      </div>
+      <div class="group-body ${isOpen?'visible':''}" id="body_${g.id}">
+        <table class="proc-table">
+          <thead>
+            <tr>
+              <th class="col-prio th-prio">🔴 Prior.</th>
+              <th class="col-tipo">Tipo ✎</th>
+              <th class="col-num">Nº do Processo</th>
+              <th class="col-desc">Objeto / Descrição ✎</th>
+              <th class="col-setor">Setor Atual ✎</th>
+              <th class="col-pend">Pendência ✎</th>
+              <th class="col-contr">Contrato Assinado</th>
+              <th class="col-emp">Empenho</th>
+              <th class="col-acao">Ação</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
+    container.appendChild(groupDiv);
+  });
+
+  if (groupsVisible === 0)
+    container.innerHTML = '<div class="empty-state">🔍 Nenhum processo encontrado para os filtros selecionados.</div>';
+
+  document.getElementById('visibleCount').textContent = totalVisible;
+  document.getElementById('totalCount').textContent   = getTotalProcs();
+  document.getElementById('groupCount').textContent   = groupsVisible + ' grupo' + (groupsVisible!==1?'s':'');
+}
+
+function getTotalProcs() {
+  return GRUPOS_BASE.reduce((a,g) => a + g.processos.filter(p => !(data[p.id]||{}).deleted).length, 0);
+}
+
+// ═══════════════════════════════════════════════════════
+// TOGGLE GROUP
+// ═══════════════════════════════════════════════════════
+window._toggleGroup = function(gid, headerEl) {
+  const body = document.getElementById('body_' + gid);
+  const isOpen = body.classList.contains('visible');
+  body.classList.toggle('visible', !isOpen);
+  headerEl.classList.toggle('open', !isOpen);
+  groupOpen[gid] = !isOpen;
+};
+
+// ═══════════════════════════════════════════════════════
+// EDIT: SETOR
+// ═══════════════════════════════════════════════════════
+window._startEditSetor = function(pid) {
+  const td = document.getElementById('setor_td_' + pid);
+  const disp = td.querySelector('.cell-display');
+  const sel  = document.getElementById('ss_' + pid);
+  if (disp) disp.style.display = 'none';
+  sel.classList.add('active');
+  sel.focus();
+};
+window._saveSetor = function(pid, sel) {
+  data[pid].setor = sel.value;
+  saveState();
+  reRenderSetorCell(pid);
+};
+window._cancelSetor = function(pid) {
+  setTimeout(() => reRenderSetorCell(pid), 150);
+};
+function reRenderSetorCell(pid) {
+  const d = data[pid];
+  const td = document.getElementById('setor_td_' + pid);
+  if (!td) return;
+  document.getElementById('ss_' + pid).classList.remove('active');
+  const disp = td.querySelector('.cell-display');
+  if (disp) {
+    disp.style.display = '';
+    if (d.setor) {
+      disp.className = 'cell-display';
+      disp.innerHTML = `<span class="setor-badge">${d.setor}</span><span class="edit-icon">✎</span>`;
+    } else {
+      disp.className = 'cell-display empty';
+      disp.innerHTML = `— <span class="edit-icon">✎</span>`;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// EDIT: PENDÊNCIA
+// ═══════════════════════════════════════════════════════
+window._startEditPend = function(pid) {
+  const td   = document.getElementById('pend_td_' + pid);
+  const disp = td.querySelector('.cell-display');
+  const inp  = document.getElementById('pend_input_' + pid);
+  if (disp) disp.style.display = 'none';
+  inp.classList.add('active');
+  inp.focus(); inp.select();
+};
+window._savePend = function(pid, inp) {
+  data[pid].pendencia = inp.value.trim();
+  saveState();
+  reRenderPendCell(pid);
+};
+window._cancelPend = function(pid, inp) {
+  inp.value = data[pid].pendencia || '';
+  reRenderPendCell(pid);
+};
+function reRenderPendCell(pid) {
+  const d   = data[pid];
+  const td  = document.getElementById('pend_td_' + pid);
+  if (!td) return;
+  document.getElementById('pend_input_' + pid).classList.remove('active');
+  const disp = td.querySelector('.cell-display');
+  if (disp) {
+    disp.style.display = '';
+    const val = d.pendencia || '';
+    disp.className = val ? 'cell-display' : 'cell-display empty';
+    disp.innerHTML  = val ? `${val}<span class="edit-icon">✎</span>` : `— <span class="edit-icon">✎</span>`;
+    disp.title = val;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// EDIT: TIPO
+// ═══════════════════════════════════════════════════════
+window._startEditTipo = function(pid) {
+  const disp = document.getElementById('tipo_disp_' + pid);
+  const sel  = document.getElementById('tipo_sel_' + pid);
+  if (disp) disp.style.display = 'none';
+  sel.classList.add('active');
+  sel.focus();
+};
+window._saveTipo = function(pid, sel) {
+  data[pid].tipo = sel.value;
+  saveState();
+  reRenderTipoCell(pid);
+};
+window._cancelTipo = function(pid) {
+  setTimeout(() => reRenderTipoCell(pid), 150);
+};
+function reRenderTipoCell(pid) {
+  const p = findProc(pid);
+  const tipoVal = data[pid].tipo || (p ? p.tipo : '');
+  const disp = document.getElementById('tipo_disp_' + pid);
+  const sel  = document.getElementById('tipo_sel_' + pid);
+  if (!disp) return;
+  sel.classList.remove('active');
+  disp.style.display = '';
+  disp.innerHTML = `${typeBadge(tipoVal)}<span class="edit-icon">✎</span>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// EDIT: DESCRIÇÃO
+// ═══════════════════════════════════════════════════════
+window._startEditDesc = function(pid) {
+  const disp = document.getElementById('desc_disp_' + pid);
+  const inp  = document.getElementById('desc_input_' + pid);
+  if (disp) disp.style.display = 'none';
+  inp.classList.add('active');
+  inp.focus(); inp.select();
+};
+window._saveDesc = function(pid, inp) {
+  data[pid].desc = inp.value.trim();
+  saveState();
+  reRenderDescCell(pid);
+};
+window._cancelDesc = function(pid, inp) {
+  const p = findProc(pid);
+  inp.value = data[pid].desc || (p ? p.desc : '');
+  reRenderDescCell(pid);
+};
+function reRenderDescCell(pid) {
+  const p = findProc(pid);
+  const descVal = data[pid].desc || (p ? p.desc : '');
+  const disp = document.getElementById('desc_disp_' + pid);
+  const inp  = document.getElementById('desc_input_' + pid);
+  if (!disp) return;
+  inp.classList.remove('active');
+  disp.style.display = '';
+  disp.title = descVal;
+  disp.innerHTML = `${descVal}<span class="edit-icon">✎</span>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// CHECKBOXES
+// ═══════════════════════════════════════════════════════
+window._saveCheck = function(pid, field, val) {
+  data[pid][field] = val;
+  saveState();
+};
+
+// ═══════════════════════════════════════════════════════
+// PRIORITY ROW TOGGLE
+// ═══════════════════════════════════════════════════════
+window._togglePrioRow = function(checkbox) {
+  const row = checkbox.closest('tr');
+  if (!row) return;
+  if (checkbox.checked) row.classList.add('row-priority');
+  else row.classList.remove('row-priority');
+};
+
+// ═══════════════════════════════════════════════════════
+// DELETE
+// ═══════════════════════════════════════════════════════
+window._askDelete = function(pid, num) {
+  pendingDeleteId = pid;
+  document.getElementById('modalNum').textContent = num;
+  document.getElementById('deleteModal').classList.add('active');
+};
+
+window.closeModal = function() {
+  pendingDeleteId = null;
+  document.getElementById('deleteModal').classList.remove('active');
+};
+
+window.confirmDelete = function() {
+  if (!pendingDeleteId) return;
+  data[pendingDeleteId].deleted = true;
+  saveState();
+  closeModal();
+  const row = document.querySelector(`tr[data-pid="${pendingDeleteId}"]`);
+  if (row) {
+    row.style.transition = 'opacity 0.25s, transform 0.25s';
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(30px)';
+    setTimeout(() => {
+      row.remove();
+      document.getElementById('visibleCount').textContent =
+        Math.max(0, parseInt(document.getElementById('visibleCount').textContent) - 1);
+      document.getElementById('totalCount').textContent = getTotalProcs();
+    }, 260);
+  }
+  pendingDeleteId = null;
+};
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function findProc(pid) {
+  for (const g of GRUPOS_BASE) {
+    const p = g.processos.find(x => x.id === pid);
+    if (p) return p;
+  }
+  return null;
+}
+
+function populateTemaFilter() {
+  const sel = document.getElementById('fTema');
+  GRUPOS_BASE.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = g.icone + ' ' + g.tema;
+    sel.appendChild(opt);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// FILTER LISTENERS
+// ═══════════════════════════════════════════════════════
+['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id => {
+  document.getElementById(id).addEventListener('change', render);
+  if (id === 'fBusca') document.getElementById(id).addEventListener('input', render);
+});
+
+// Expose clearFilters globally (called from HTML onclick)
+window.clearFilters = clearFilters;
+
+// ═══════════════════════════════════════════════════════
+// INIT — render immediately, Firebase syncs on top
+// ═══════════════════════════════════════════════════════
+ensureDefaults();
+populateTemaFilter();
+render();
+setStatus('⏳ Sincronizando com Firebase…', false);
+</script>
+
+</body>
+</html>
