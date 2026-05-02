@@ -135,6 +135,114 @@
   }
   .btn-clear:hover { background: var(--gray-100); color: var(--gray-700); }
 
+  .btn-novo-proc {
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .btn-novo-proc:hover { background: var(--navy2); }
+
+  /* ─── MODAL NOVO PROCESSO ─── */
+  .np-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 400;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .np-overlay.active { opacity: 1; pointer-events: all; }
+  .np-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 620px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    transform: translateY(20px);
+    transition: transform 0.2s;
+  }
+  .np-overlay.active .np-modal { transform: translateY(0); }
+  .np-header {
+    background: var(--navy);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 12px 12px 0 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .np-header h3 { font-size: 15px; font-weight: 700; }
+  .np-close {
+    background: none; border: none; color: white;
+    font-size: 20px; cursor: pointer; line-height: 1;
+    opacity: 0.7; padding: 0 4px;
+  }
+  .np-close:hover { opacity: 1; }
+  .np-body { padding: 20px; }
+  .np-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .np-field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 150px; }
+  .np-field label {
+    font-size: 11px; font-weight: 700; color: var(--gray-500);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .np-field input, .np-field select, .np-field textarea {
+    border: 1px solid var(--gray-300);
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--gray-900);
+    background: var(--gray-50);
+    outline: none;
+    transition: border 0.15s;
+  }
+  .np-field input:focus, .np-field select:focus, .np-field textarea:focus {
+    border-color: var(--blue);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(30,111,181,0.1);
+  }
+  .np-field textarea { resize: vertical; min-height: 72px; }
+  .np-field.full { flex: 100%; min-width: 100%; }
+  .np-section {
+    font-size: 11px; font-weight: 700; color: var(--navy);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    border-bottom: 2px solid var(--blue-light);
+    padding-bottom: 4px; margin-bottom: 12px; margin-top: 4px;
+  }
+  .np-footer {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 14px 20px;
+    border-top: 1px solid var(--gray-200);
+  }
+  .np-btn-cancel {
+    background: var(--gray-100); border: 1px solid var(--gray-200);
+    border-radius: 8px; padding: 9px 20px;
+    font-size: 13px; font-weight: 600; color: var(--gray-600);
+    cursor: pointer; font-family: inherit;
+  }
+  .np-btn-cancel:hover { background: var(--gray-200); }
+  .np-btn-save {
+    background: var(--blue); border: none;
+    border-radius: 8px; padding: 9px 24px;
+    font-size: 13px; font-weight: 700; color: white;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .np-btn-save:hover { background: var(--navy); }
+  .np-error {
+    color: var(--red); font-size: 12px; font-weight: 600;
+    padding: 8px 12px; background: var(--red-light);
+    border-radius: 6px; margin-bottom: 12px; display: none;
+  }
+
   .filters-info {
     margin-top: 8px;
     font-size: 11px;
@@ -689,6 +797,7 @@
         <option value="CC">CC</option>
         <option value="DFIN/CGFR">DFIN/CGFR</option>
         <option value="DFIN/EMPENHO">DFIN/EMPENHO</option>
+        <option value="SUSP">SUSP</option>
       </select>
     </div>
     <div class="filter-group">
@@ -716,6 +825,7 @@
       </select>
     </div>
     <button class="btn-clear" onclick="clearFilters()">✕ Limpar filtros</button>
+    <button class="btn-novo-proc" onclick="W._openNovo()">＋ Novo Processo</button>
   </div>
   <div class="filters-info">
     <span>Exibindo <strong id="visibleCount">0</strong> de <strong id="totalCount">0</strong> processos</span>
@@ -726,6 +836,99 @@
 
 <!-- MAIN -->
 <div class="main" id="mainContent"></div>
+
+<!-- MODAL NOVO PROCESSO -->
+<div class="np-overlay" id="npOverlay">
+  <div class="np-modal">
+    <div class="np-header">
+      <h3>➕ Cadastrar Novo Processo</h3>
+      <button class="np-close" onclick="W._closeNovo()">×</button>
+    </div>
+    <div class="np-body">
+      <div class="np-error" id="npError"></div>
+
+      <div class="np-section">Identificação</div>
+      <div class="np-row">
+        <div class="np-field full">
+          <label>Nº do Processo *</label>
+          <input type="text" id="np_num" placeholder="Ex: 00027.001234/2026-01">
+        </div>
+      </div>
+      <div class="np-row">
+        <div class="np-field full">
+          <label>Objeto / Descrição *</label>
+          <textarea id="np_desc" placeholder="Descreva o objeto do processo..."></textarea>
+        </div>
+      </div>
+      <div class="np-row">
+        <div class="np-field">
+          <label>Tipo *</label>
+          <select id="np_tipo">
+            <option value="">-- Selecione --</option>
+            <option>PRINCIPAL</option><option>ADITIVO</option><option>EXECUÇÃO</option>
+            <option>ATA</option><option>DISPENSA</option><option>ADESÃO</option>
+            <option>CESSÃO</option><option>LOCAÇÃO</option><option>MEDIÇÃO</option><option>OUTRO</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Tema / Grupo *</label>
+          <select id="np_grupo">
+            <option value="">-- Selecione --</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="np-section">Situação Atual</div>
+      <div class="np-row">
+        <div class="np-field">
+          <label>Setor Atual</label>
+          <select id="np_setor">
+            <option value="">-- Selecione --</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Contrato Assinado</label>
+          <select id="np_contrato">
+            <option value="false">Não</option>
+            <option value="true">Sim ✓</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Empenho</label>
+          <select id="np_empenho">
+            <option value="false">Não</option>
+            <option value="true">Sim ✓</option>
+          </select>
+        </div>
+      </div>
+      <div class="np-row">
+        <div class="np-field full">
+          <label>Pendência</label>
+          <textarea id="np_pend" placeholder="Descreva a pendência atual, se houver..." rows="2"></textarea>
+        </div>
+      </div>
+      <div class="np-row">
+        <div class="np-field">
+          <label>Prioridade</label>
+          <select id="np_prio">
+            <option value="false">Normal</option>
+            <option value="true">🔴 Prioritário</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Processo vinculado a</label>
+          <select id="np_pai">
+            <option value="">Nenhum (processo principal)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="np-footer">
+      <button class="np-btn-cancel" onclick="W._closeNovo()">Cancelar</button>
+      <button class="np-btn-save" onclick="W._salvarNovo()">✔ Cadastrar Processo</button>
+    </div>
+  </div>
+</div>
 
 <!-- CONFIRM DELETE MODAL -->
 <div class="modal-overlay" id="deleteModal">
@@ -767,7 +970,7 @@ const COL  = collection(db, 'processos'); // cada processo = 1 documento
 // ════════════════════════════════════════════════════════
 // DADOS BASE
 // ════════════════════════════════════════════════════════
-const SETORES = ['GAB','DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO'];
+const SETORES = ['GAB','DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO','SUSP'];
 const TIPOS   = ['PRINCIPAL','ADITIVO','EXECUÇÃO','ATA','DISPENSA','ADESÃO','CESSÃO','LOCAÇÃO','MEDIÇÃO','OUTRO'];
 
 const GRUPOS = [
@@ -1250,6 +1453,106 @@ window.confirmDelete = () => {
   pendingDeleteId=null;
 };
 document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ════════════════════════════════════════════════════════
+// NOVO PROCESSO — modal de cadastro
+// ════════════════════════════════════════════════════════
+W._openNovo = () => {
+  // Limpa campos
+  ['np_num','np_desc','np_pend'].forEach(id => document.getElementById(id).value = '');
+  ['np_tipo','np_grupo','np_setor','np_pai'].forEach(id => document.getElementById(id).selectedIndex = 0);
+  document.getElementById('np_contrato').value = 'false';
+  document.getElementById('np_empenho').value  = 'false';
+  document.getElementById('np_prio').value     = 'false';
+  document.getElementById('npError').style.display = 'none';
+
+  // Preenche selects dinâmicos
+  const grpSel = document.getElementById('np_grupo');
+  grpSel.innerHTML = '<option value="">-- Selecione --</option>';
+  GRUPOS.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.id; o.textContent = g.icone + ' ' + g.tema;
+    grpSel.appendChild(o);
+  });
+
+  const setorSel = document.getElementById('np_setor');
+  setorSel.innerHTML = '<option value="">-- Selecione --</option>';
+  SETORES.forEach(s => {
+    const o = document.createElement('option'); o.value = s; o.textContent = s;
+    setorSel.appendChild(o);
+  });
+
+  const paiSel = document.getElementById('np_pai');
+  paiSel.innerHTML = '<option value="">Nenhum (processo principal)</option>';
+  GRUPOS.forEach(g => g.processos.forEach(p => {
+    if (DB[p.id]?.deleted) return;
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.num + ' — ' + (DB[p.id]?.desc || p.desc).substring(0,50);
+    paiSel.appendChild(o);
+  }));
+
+  document.getElementById('npOverlay').classList.add('active');
+  setTimeout(() => document.getElementById('np_num').focus(), 100);
+};
+
+W._closeNovo = () => {
+  document.getElementById('npOverlay').classList.remove('active');
+};
+
+W._salvarNovo = async () => {
+  const num   = document.getElementById('np_num').value.trim();
+  const desc  = document.getElementById('np_desc').value.trim();
+  const tipo  = document.getElementById('np_tipo').value;
+  const gid   = document.getElementById('np_grupo').value;
+  const setor = document.getElementById('np_setor').value;
+  const pend  = document.getElementById('np_pend').value.trim();
+  const contr = document.getElementById('np_contrato').value === 'true';
+  const emp   = document.getElementById('np_empenho').value  === 'true';
+  const prio  = document.getElementById('np_prio').value     === 'true';
+
+  const errEl = document.getElementById('npError');
+
+  // Validações
+  if (!num)  { errEl.textContent = '⚠️ Informe o Nº do Processo.';      errEl.style.display='block'; return; }
+  if (!desc) { errEl.textContent = '⚠️ Informe o Objeto / Descrição.';  errEl.style.display='block'; return; }
+  if (!tipo) { errEl.textContent = '⚠️ Selecione o Tipo.';              errEl.style.display='block'; return; }
+  if (!gid)  { errEl.textContent = '⚠️ Selecione o Tema / Grupo.';      errEl.style.display='block'; return; }
+
+  // Verifica duplicidade de número
+  const allProcs = GRUPOS.flatMap(g => g.processos);
+  if (allProcs.some(p => p.num === num)) {
+    errEl.textContent = '⚠️ Já existe um processo com esse número.';
+    errEl.style.display = 'block'; return;
+  }
+
+  errEl.style.display = 'none';
+
+  // Gera novo ID único
+  const newId = 'px_' + Date.now();
+
+  // Adiciona ao grupo correto em memória
+  const grupo = GRUPOS.find(g => g.id === gid);
+  if (!grupo) return;
+  grupo.processos.push({ id: newId, tipo, num, desc });
+
+  // Cria registro no DB local e no Firebase
+  DB[newId] = {
+    setor, pendencia: pend, contrato: contr,
+    empenho: emp, prioridade: prio,
+    desc: '', tipo: '', deleted: false
+  };
+
+  await save(newId);
+
+  W._closeNovo();
+  render();
+};
+
+// Fecha ao clicar fora
+document.getElementById('npOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) W._closeNovo();
+});
 
 // ════════════════════════════════════════════════════════
 // FILTROS
