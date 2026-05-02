@@ -681,6 +681,7 @@
       <label>Setor Atual</label>
       <select id="fSetor">
         <option value="">Todos os setores</option>
+        <option value="GAB">GAB</option>
         <option value="DADM">DADM</option>
         <option value="GOBRE">GOBRE</option>
         <option value="GLC">GLC</option>
@@ -744,13 +745,11 @@
 <div id="saveIndicator">✓ Salvo</div>
 
 <script type="module">
-// ═══════════════════════════════════════════════════════
-// FIREBASE — usando versão compatível e estável
-// ═══════════════════════════════════════════════════════
-import { initializeApp }          from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getFirestore, doc,
-         updateDoc, onSnapshot,
-         setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {
+  getFirestore, collection, doc,
+  setDoc, onSnapshot
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCFQm4fbR4m4zM4zN-L0ovXx35SJQDTVPk",
@@ -761,17 +760,17 @@ const firebaseConfig = {
   appId:             "1:114585997653:web:992b369bc92d8989a61fdc"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-const STATE_DOC = doc(db, 'painel_ssp', 'state');
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const COL  = collection(db, 'processos'); // cada processo = 1 documento
 
-// ═══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 // DADOS BASE
-// ═══════════════════════════════════════════════════════
-const SETORES = ['DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO'];
+// ════════════════════════════════════════════════════════
+const SETORES = ['GAB','DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO'];
 const TIPOS   = ['PRINCIPAL','ADITIVO','EXECUÇÃO','ATA','DISPENSA','ADESÃO','CESSÃO','LOCAÇÃO','MEDIÇÃO','OUTRO'];
 
-const GRUPOS_BASE = [
+const GRUPOS = [
   { id:'g1', icone:'🏗️', tema:'Manutenção Predial', processos:[
     {id:'p1',  tipo:'PRINCIPAL', num:'00027.005168/2025-70', desc:'Manutenção Predial — processo principal'},
     {id:'p2',  tipo:'EXECUÇÃO',  num:'00027.008809/2025-48', desc:'Exec. Ata Manut. Predial — Monte Claro'},
@@ -806,148 +805,116 @@ const GRUPOS_BASE = [
     {id:'p25', tipo:'OUTRO',    num:'00027.002227/2026-39', desc:'Novo Contrato Com. Visual 2026 — Empresa Mega'},
     {id:'p26', tipo:'OUTRO',    num:'00027.008105/2025-75', desc:'Placa de inauguração / placa de porta e outros'},
   ]},
-  { id:'g5',  icone:'🔥', tema:'Extintores e Segurança',        processos:[{id:'p27', tipo:'ATA',      num:'00027.005996/2024-27', desc:'Ata extintores'}]},
+  { id:'g5',  icone:'🔥', tema:'Extintores e Segurança',        processos:[{id:'p27',tipo:'ATA',      num:'00027.005996/2024-27',desc:'Ata extintores'}]},
   { id:'g6',  icone:'🏠', tema:'BEPI — Contratos de Serviços',  processos:[
-    {id:'p28', tipo:'ADITIVO', num:'00027.009103/2024-12', desc:'Aditivo qualitativo BEPI'},
-    {id:'p29', tipo:'ADITIVO', num:'00027.008029/2025-06', desc:'Aditivo de valor BEPI'},
-    {id:'p30', tipo:'ADITIVO', num:'00027.000596/2026-97', desc:'Aditivo de vigência BEPI'},
+    {id:'p28',tipo:'ADITIVO',num:'00027.009103/2024-12',desc:'Aditivo qualitativo BEPI'},
+    {id:'p29',tipo:'ADITIVO',num:'00027.008029/2025-06',desc:'Aditivo de valor BEPI'},
+    {id:'p30',tipo:'ADITIVO',num:'00027.000596/2026-97',desc:'Aditivo de vigência BEPI'},
   ]},
-  { id:'g7',  icone:'📦', tema:'Locação EMRI / LOCABOX',        processos:[{id:'p31', tipo:'ATA',      num:'00027.002178/2026-34', desc:'Locação EMRI pré-fabricados climatizados (IMEPI / LOCABOX)'}]},
+  { id:'g7',  icone:'📦', tema:'Locação EMRI / LOCABOX',        processos:[{id:'p31',tipo:'ATA',      num:'00027.002178/2026-34',desc:'Locação EMRI pré-fabricados climatizados (IMEPI / LOCABOX)'}]},
   { id:'g8',  icone:'⚡', tema:'Gerador de Energia',            processos:[
-    {id:'p32', tipo:'ATA',   num:'00027.002337/2026-09', desc:'Ata gerador'},
-    {id:'p33', tipo:'OUTRO', num:'00027.000614/2026-31', desc:'Emergencial gerador'},
+    {id:'p32',tipo:'ATA',  num:'00027.002337/2026-09',desc:'Ata gerador'},
+    {id:'p33',tipo:'OUTRO',num:'00027.000614/2026-31',desc:'Emergencial gerador'},
   ]},
-  { id:'g9',  icone:'☀️', tema:'Energia Fotovoltaica',          processos:[{id:'p34', tipo:'ATA',       num:'00027.005637/2025-51', desc:'Ata energia fotovoltaica'}]},
+  { id:'g9',  icone:'☀️', tema:'Energia Fotovoltaica',          processos:[{id:'p34',tipo:'ATA',      num:'00027.005637/2025-51',desc:'Ata energia fotovoltaica'}]},
   { id:'g10', icone:'💼', tema:'Patrimônio e Gestão de Ativos', processos:[
-    {id:'p35', tipo:'PRINCIPAL', num:'00027.001099/2026-14', desc:'Gerenciamento de ativos — Patrimônio'},
-    {id:'p36', tipo:'OUTRO',     num:'00027005943/2025-97',  desc:'Credenciamento de Empresas'},
+    {id:'p35',tipo:'PRINCIPAL',num:'00027.001099/2026-14',desc:'Gerenciamento de ativos — Patrimônio'},
+    {id:'p36',tipo:'OUTRO',    num:'00027005943/2025-97', desc:'Credenciamento de Empresas'},
   ]},
   { id:'g11', icone:'🏘️', tema:'Locação de Imóveis e Unidades', processos:[
-    {id:'p37', tipo:'LOCAÇÃO', num:'00027.006958/2025-72', desc:'Locação CASA X (TJ)'},
-    {id:'p38', tipo:'LOCAÇÃO', num:'00027.003552/2025-38', desc:'Locação unidade PF — Picos'},
-    {id:'p39', tipo:'LOCAÇÃO', num:'00027.010008/2025-42', desc:'Locação unidade Timon (Zanata)'},
+    {id:'p37',tipo:'LOCAÇÃO',num:'00027.006958/2025-72',desc:'Locação CASA X (TJ)'},
+    {id:'p38',tipo:'LOCAÇÃO',num:'00027.003552/2025-38',desc:'Locação unidade PF — Picos'},
+    {id:'p39',tipo:'LOCAÇÃO',num:'00027.010008/2025-42',desc:'Locação unidade Timon (Zanata)'},
   ]},
   { id:'g12', icone:'🤝', tema:'Cessão de Imóveis / Cooperação', processos:[
-    {id:'p40', tipo:'CESSÃO', num:'00027.010480/2025-85', desc:'Cessão da CODEVASF'},
-    {id:'p41', tipo:'CESSÃO', num:'00027.005048/2025-72', desc:'Cessão SEFAZ para CIA Piracuruca'},
-    {id:'p42', tipo:'CESSÃO', num:'00027.005619/2025-79', desc:'Cessão Altos'},
+    {id:'p40',tipo:'CESSÃO',num:'00027.010480/2025-85',desc:'Cessão da CODEVASF'},
+    {id:'p41',tipo:'CESSÃO',num:'00027.005048/2025-72',desc:'Cessão SEFAZ para CIA Piracuruca'},
+    {id:'p42',tipo:'CESSÃO',num:'00027.005619/2025-79',desc:'Cessão Altos'},
   ]},
-  { id:'g13', icone:'🎯', tema:'Stand de Tiros — CEFAP / ACADEPOL', processos:[{id:'p43', tipo:'PRINCIPAL', num:'00027.008544/2025-88', desc:'Stand de tiros (CEFAP e ACADEPOL)'}]},
-  { id:'g14', icone:'⚖️', tema:'Desapropriação — Bom Jesus',        processos:[{id:'p44', tipo:'PRINCIPAL', num:'00027.004660/2025-28', desc:'Desapropriação Bom Jesus'}]},
-  { id:'g15', icone:'🏛️', tema:'Construção 30° BPM — Barras-PI',    processos:[{id:'p45', tipo:'ADITIVO',   num:'00027.002306/2026-40', desc:'Prorrogação prazo — Contrato nº 31/2025', obs:'HIGILAR CONSTRUÇÕES LTDA — Construção 30° BPM Barras-PI'}]},
-  { id:'g16', icone:'👥', tema:'CONVIVE',                            processos:[{id:'p46', tipo:'PRINCIPAL', num:'00027.003923/2025-81', desc:'CONVIVE'}]},
+  { id:'g13', icone:'🎯', tema:'Stand de Tiros — CEFAP/ACADEPOL',processos:[{id:'p43',tipo:'PRINCIPAL',num:'00027.008544/2025-88',desc:'Stand de tiros (CEFAP e ACADEPOL)'}]},
+  { id:'g14', icone:'⚖️', tema:'Desapropriação — Bom Jesus',     processos:[{id:'p44',tipo:'PRINCIPAL',num:'00027.004660/2025-28',desc:'Desapropriação Bom Jesus'}]},
+  { id:'g15', icone:'🏛️', tema:'Construção 30° BPM — Barras-PI', processos:[{id:'p45',tipo:'ADITIVO',  num:'00027.002306/2026-40',desc:'Prorrogação prazo — Contrato nº 31/2025',obs:'HIGILAR CONSTRUÇÕES LTDA — Construção 30° BPM Barras-PI'}]},
+  { id:'g16', icone:'👥', tema:'CONVIVE',                         processos:[{id:'p46',tipo:'PRINCIPAL',num:'00027.003923/2025-81',desc:'CONVIVE'}]},
 ];
 
-// ═══════════════════════════════════════════════════════
-// ESTADO LOCAL
-// ═══════════════════════════════════════════════════════
-let DB       = {};   // espelho do Firestore — atualizado pelo onSnapshot
+// ════════════════════════════════════════════════════════
+// ESTADO — DB é espelho local do Firestore
+// ════════════════════════════════════════════════════════
+const DB = {};  // { p1: {setor,pendencia,contrato,empenho,prioridade,desc,tipo,deleted}, ... }
 let groupOpen = {};
 let pendingDeleteId = null;
-let saveTimer = null;
+let fbReady = false;
 
 function emptyRec() {
   return { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:'', deleted:false };
 }
+GRUPOS.forEach(g => g.processos.forEach(p => { DB[p.id] = emptyRec(); }));
 
-function initDB() {
-  GRUPOS_BASE.forEach(g => g.processos.forEach(p => {
-    if (!DB[p.id]) DB[p.id] = emptyRec();
-    else {
-      const d = DB[p.id];
-      if (d.setor     === undefined) d.setor     = '';
-      if (d.pendencia === undefined) d.pendencia = '';
-      if (d.contrato  === undefined) d.contrato  = false;
-      if (d.empenho   === undefined) d.empenho   = false;
-      if (d.prioridade=== undefined) d.prioridade= false;
-      if (d.desc      === undefined) d.desc      = '';
-      if (d.tipo      === undefined) d.tipo      = '';
-      if (d.deleted   === undefined) d.deleted   = false;
-    }
-  }));
-}
+// ════════════════════════════════════════════════════════
+// FIREBASE — listener em tempo real por processo individual
+// Cada processo é um documento separado na coleção 'processos'
+// Isso garante: save instantâneo, sem conflito, sem re-render global
+// ════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════
-// FIREBASE — LISTENER TEMPO REAL
-// Usa onSnapshot para escutar mudanças do servidor
-// ═══════════════════════════════════════════════════════
-let fbReady = false;
-
-onSnapshot(STATE_DOC, (snap) => {
+// Escuta toda a coleção de uma vez
+const unsub = onSnapshot(COL, (snapshot) => {
   fbReady = true;
-  if (snap.exists()) {
-    // Substitui todo o DB pelo que está no servidor
-    const remote = snap.data();
+  let changed = false;
+
+  snapshot.docChanges().forEach(change => {
+    const pid = change.doc.id;
+    if (!DB[pid]) return; // processo não existe na base
+    if (change.type === 'removed') return;
+
+    const remote = change.doc.data();
+    const local  = DB[pid];
+
+    // Atualiza só os campos que mudaram no servidor
+    let fieldChanged = false;
     Object.keys(remote).forEach(k => {
-      if (/^p\d+$/.test(k)) DB[k] = remote[k];
+      if (local[k] !== remote[k]) {
+        local[k] = remote[k];
+        fieldChanged = true;
+      }
     });
+
+    if (fieldChanged) {
+      changed = true;
+      // Atualiza só a linha afetada — NÃO re-renderiza tudo
+      updateRow(pid);
+    }
+  });
+
+  // Na primeira carga, renderiza tudo
+  if (snapshot.metadata.hasPendingWrites === false && !document.getElementById('mainContent').children.length) {
+    render();
   }
-  initDB();
-  render();
-  setStatus('🟢 Conectado', false);
+
+  setStatus('🟢 Online', false);
 }, (err) => {
   fbReady = false;
-  console.error('Firestore error:', err.code, err.message);
+  console.error('Firestore:', err.code, err.message);
   if (err.code === 'permission-denied') {
-    setStatus('⛔ Permissão negada — verifique regras do Firestore', true);
+    setStatus('⛔ Permissão negada — ajuste as regras do Firestore', true);
   } else {
-    setStatus('📵 Sem conexão (' + err.code + ') — recarregando em 8s', true);
+    setStatus('📵 Sem conexão — recarregando em 8s', true);
     setTimeout(() => location.reload(), 8000);
   }
 });
 
-// ═══════════════════════════════════════════════════════
-// FIREBASE — SALVAR CAMPO ÚNICO (mais eficiente e correto)
-// Salva apenas o campo alterado, não o documento inteiro
-// ═══════════════════════════════════════════════════════
-async function saveField(pid, field, value) {
-  DB[pid][field] = value;  // atualiza local imediatamente
-  if (!fbReady) { setStatus('⚠️ Sem conexão', true); return; }
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    try {
-      setStatus('💾 Salvando…', false);
-      // updateDoc com notação de ponto salva só o campo específico
-      await updateDoc(STATE_DOC, { [`${pid}.${field}`]: value });
-      setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
-      flashSaved();
-    } catch(e) {
-      // Documento pode não existir ainda — usa setDoc
-      if (e.code === 'not-found') {
-        try {
-          const payload = {};
-          Object.keys(DB).forEach(k => { payload[k] = DB[k]; });
-          await setDoc(STATE_DOC, payload);
-          setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
-          flashSaved();
-        } catch(e2) {
-          setStatus('⚠️ Erro: ' + e2.code, true);
-        }
-      } else {
-        setStatus('⚠️ Erro ao salvar: ' + e.code, true);
-        console.error('saveField error:', e);
-      }
-    }
-  }, 300);
-}
-
-// Para salvar o objeto de processo inteiro (ex: delete)
-async function saveRecord(pid) {
+// ════════════════════════════════════════════════════════
+// SAVE — salva UM processo no Firestore imediatamente (sem debounce)
+// ════════════════════════════════════════════════════════
+async function save(pid) {
   if (!fbReady) { setStatus('⚠️ Sem conexão', true); return; }
   try {
-    setStatus('💾 Salvando…', false);
-    await updateDoc(STATE_DOC, { [pid]: DB[pid] });
-    setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
+    setStatus('💾…', false);
+    await setDoc(doc(COL, pid), DB[pid]);
+    setStatus('✓ ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}), false);
     flashSaved();
   } catch(e) {
-    if (e.code === 'not-found') {
-      const payload = {};
-      Object.keys(DB).forEach(k => { payload[k] = DB[k]; });
-      await setDoc(STATE_DOC, payload);
-      setStatus('✓ Salvo', false);
-    } else {
-      setStatus('⚠️ Erro: ' + e.code, true);
-    }
+    console.error('save error:', e.code, e.message);
+    setStatus('⚠️ Erro: ' + e.code, true);
   }
 }
 
@@ -955,21 +922,27 @@ function setStatus(msg, isErr) {
   const el = document.getElementById('lastSaved');
   if (!el) return;
   el.textContent = msg;
-  el.style.color = isErr ? '#fca5a5' : 'rgba(255,255,255,0.85)';
+  el.style.color = isErr ? '#fca5a5' : 'rgba(255,255,255,0.9)';
 }
-
 function flashSaved() {
-  const ind = document.getElementById('saveIndicator');
-  if (!ind) return;
-  ind.style.display = 'block';
-  ind.style.animation = 'none';
-  setTimeout(() => { ind.style.animation = 'fadeInOut 2s forwards'; }, 10);
-  setTimeout(() => { ind.style.display = 'none'; }, 2200);
+  const el = document.getElementById('saveIndicator');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.animation = 'none';
+  setTimeout(() => { el.style.animation = 'fadeInOut 2s forwards'; }, 10);
+  setTimeout(() => { el.style.display = 'none'; }, 2200);
 }
 
-// ═══════════════════════════════════════════════════════
-// FILTROS
-// ═══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+// RENDER COMPLETO — só na carga inicial e em filtros
+// ════════════════════════════════════════════════════════
+const TC = {
+  'PRINCIPAL':'t-principal','ADITIVO':'t-aditivo','EXECUÇÃO':'t-execucao',
+  'ATA':'t-ata','DISPENSA':'t-dispensa','ADESÃO':'t-adesao',
+  'CESSÃO':'t-cessao','LOCAÇÃO':'t-locacao','MEDIÇÃO':'t-medicao','OUTRO':'t-outro'
+};
+function tbadge(t) { return `<span class="type-badge ${TC[t]||'t-outro'}">${t}</span>`; }
+
 function getFilters() {
   return {
     busca:      document.getElementById('fBusca').value.trim().toLowerCase(),
@@ -982,13 +955,13 @@ function getFilters() {
   };
 }
 
-function matchProc(p, f) {
-  const d = DB[p.id] || {};
+function matchP(p, f) {
+  const d = DB[p.id];
   if (d.deleted) return false;
-  const tipoEfetivo = d.tipo || p.tipo;
-  const descEfetiva = d.desc || p.desc;
-  if (f.busca && !p.num.toLowerCase().includes(f.busca) && !descEfetiva.toLowerCase().includes(f.busca)) return false;
-  if (f.tipo  && tipoEfetivo !== f.tipo) return false;
+  const tv = d.tipo || p.tipo;
+  const dv = d.desc || p.desc;
+  if (f.busca && !p.num.toLowerCase().includes(f.busca) && !dv.toLowerCase().includes(f.busca)) return false;
+  if (f.tipo  && tv !== f.tipo) return false;
   if (f.setor && d.setor !== f.setor) return false;
   if (f.contrato   === 'sim' && !d.contrato)   return false;
   if (f.contrato   === 'nao' &&  d.contrato)   return false;
@@ -999,124 +972,92 @@ function matchProc(p, f) {
   return true;
 }
 
-function clearFilters() {
-  ['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  render();
-}
-
-// ═══════════════════════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════════════════════
-const TYPE_CLASS = {
-  'PRINCIPAL':'t-principal','ADITIVO':'t-aditivo','EXECUÇÃO':'t-execucao',
-  'ATA':'t-ata','DISPENSA':'t-dispensa','ADESÃO':'t-adesao',
-  'CESSÃO':'t-cessao','LOCAÇÃO':'t-locacao','MEDIÇÃO':'t-medicao','OUTRO':'t-outro'
-};
-
-function badge(tipo) {
-  return `<span class="type-badge ${TYPE_CLASS[tipo]||'t-outro'}">${tipo}</span>`;
+function buildRow(p, isFirst) {
+  const d = DB[p.id];
+  const tv = d.tipo || p.tipo;
+  const dv = d.desc || p.desc;
+  const pv = d.pendencia || '';
+  const rc = (isFirst?'row-principal':'row-vinculado') + (d.prioridade?' row-priority':'');
+  return `<tr class="${rc}" data-pid="${p.id}">
+    <td class="col-prio check-col">
+      <input type="checkbox" class="priority-check" ${d.prioridade?'checked':''}
+        onchange="W._chk('${p.id}','prioridade',this.checked);this.closest('tr').classList.toggle('row-priority',this.checked)">
+    </td>
+    <td class="col-tipo editable-cell" id="t_td_${p.id}">
+      <div class="cell-display" onclick="W._et('${p.id}')">${tbadge(tv)}<span class="edit-icon">✎</span></div>
+      <select class="setor-select" id="t_sel_${p.id}" onchange="W._st('${p.id}',this)" onblur="W._xt('${p.id}')">
+        ${TIPOS.map(t=>`<option value="${t}"${tv===t?' selected':''}>${t}</option>`).join('')}
+      </select>
+    </td>
+    <td class="col-num">
+      <div class="level-indent">
+        ${isFirst?'':'<span class="level-arrow">↳</span>'}
+        <span class="proc-num">${p.num}</span>
+      </div>
+    </td>
+    <td class="col-desc editable-cell" id="d_td_${p.id}">
+      <div class="cell-display" onclick="W._ed('${p.id}')" title="${dv.replace(/"/g,'&quot;')}">${dv}<span class="edit-icon">✎</span></div>
+      <div class="input-wrap" id="d_wr_${p.id}" style="display:none">
+        <textarea class="cell-input active" id="d_in_${p.id}" rows="2">${dv}</textarea>
+        <button class="btn-confirm-save" onclick="W._sd('${p.id}')">✔ Salvar</button>
+      </div>
+      ${p.obs?`<div class="desc-obs">${p.obs}</div>`:''}
+    </td>
+    <td class="col-setor editable-cell" id="s_td_${p.id}">
+      <div class="cell-display ${d.setor?'':'empty'}" onclick="W._es('${p.id}')">
+        ${d.setor?`<span class="setor-badge">${d.setor}</span>`:'—'}<span class="edit-icon">✎</span>
+      </div>
+      <select class="setor-select" id="s_sel_${p.id}" onchange="W._ss('${p.id}',this)" onblur="W._xs('${p.id}')">
+        <option value="">-- Setor --</option>
+        ${SETORES.map(s=>`<option value="${s}"${d.setor===s?' selected':''}>${s}</option>`).join('')}
+      </select>
+    </td>
+    <td class="col-pend editable-cell" id="p_td_${p.id}">
+      <div class="cell-display ${pv?'':'empty'}" onclick="W._ep('${p.id}')">${pv||'—'}<span class="edit-icon">✎</span></div>
+      <div class="input-wrap" id="p_wr_${p.id}" style="display:none">
+        <textarea class="cell-input active" id="p_in_${p.id}" rows="2">${pv}</textarea>
+        <button class="btn-confirm-save" onclick="W._sp('${p.id}')">✔ Salvar</button>
+      </div>
+    </td>
+    <td class="col-contr check-col">
+      <input type="checkbox" class="status-check" ${d.contrato?'checked':''} onchange="W._chk('${p.id}','contrato',this.checked)">
+    </td>
+    <td class="col-emp check-col">
+      <input type="checkbox" class="status-check" ${d.empenho?'checked':''} onchange="W._chk('${p.id}','empenho',this.checked)">
+    </td>
+    <td class="col-acao">
+      <button class="btn-delete" onclick="W._del('${p.id}','${p.num}')">🗑</button>
+    </td>
+  </tr>`;
 }
 
 function render() {
-  const f   = getFilters();
-  const ct  = document.getElementById('mainContent');
+  const f  = getFilters();
+  const ct = document.getElementById('mainContent');
   ct.innerHTML = '';
-  let vis = 0, grps = 0;
+  let vis=0, grps=0;
 
-  GRUPOS_BASE.forEach(g => {
+  GRUPOS.forEach(g => {
     if (f.tema && g.id !== f.tema) return;
-    const procs = g.processos.filter(p => matchProc(p, f));
-    if (!procs.length) return;
-    grps++; vis += procs.length;
-
-    const isOpen = groupOpen[g.id] !== false;
-    let rows = '';
-
-    procs.forEach(p => {
-      const isFirst = g.processos.indexOf(p) === 0;
-      const d = DB[p.id];
-      const isPrio = !!d.prioridade;
-      const rowCls = (isFirst ? 'row-principal' : 'row-vinculado') + (isPrio ? ' row-priority' : '');
-      const tipoVal = d.tipo || p.tipo;
-      const descVal = d.desc || p.desc;
-      const pendVal = d.pendencia || '';
-
-      rows += `<tr class="${rowCls}" data-pid="${p.id}">
-        <td class="col-prio check-col">
-          <input type="checkbox" class="priority-check" ${isPrio?'checked':''}
-            title="Prioritário"
-            onchange="window._chk('${p.id}','prioridade',this.checked);window._prow(this)">
-        </td>
-        <td class="col-tipo editable-cell" id="tipo_td_${p.id}">
-          <div class="cell-display" onclick="window._eTipo('${p.id}')">${badge(tipoVal)}<span class="edit-icon">✎</span></div>
-          <select class="setor-select" id="tipo_sel_${p.id}"
-            onchange="window._sTipo('${p.id}',this)"
-            onblur="window._xTipo('${p.id}')">
-            ${TIPOS.map(t=>`<option value="${t}"${tipoVal===t?' selected':''}>${t}</option>`).join('')}
-          </select>
-        </td>
-        <td class="col-num">
-          <div class="level-indent">
-            ${isFirst?'':'<span class="level-arrow">↳</span>'}
-            <span class="proc-num">${p.num}</span>
-          </div>
-        </td>
-        <td class="col-desc editable-cell" id="desc_td_${p.id}">
-          <div class="cell-display" onclick="window._eDesc('${p.id}')" title="${descVal}">${descVal}<span class="edit-icon">✎</span></div>
-          <div class="input-wrap" id="desc_wrap_${p.id}" style="display:none">
-            <textarea class="cell-input active" id="desc_inp_${p.id}" rows="2">${descVal}</textarea>
-            <button class="btn-confirm-save" onclick="window._sDesc('${p.id}')">✔ Salvar</button>
-          </div>
-          ${p.obs?`<div class="desc-obs">${p.obs}</div>`:''}
-        </td>
-        <td class="col-setor editable-cell" id="setor_td_${p.id}">
-          <div class="cell-display ${d.setor?'':'empty'}" onclick="window._eSetor('${p.id}')">
-            ${d.setor?`<span class="setor-badge">${d.setor}</span>`:'—'}<span class="edit-icon">✎</span>
-          </div>
-          <select class="setor-select" id="setor_sel_${p.id}"
-            onchange="window._sSetor('${p.id}',this)"
-            onblur="window._xSetor('${p.id}')">
-            <option value="">-- Setor --</option>
-            ${SETORES.map(s=>`<option value="${s}"${d.setor===s?' selected':''}>${s}</option>`).join('')}
-          </select>
-        </td>
-        <td class="col-pend editable-cell" id="pend_td_${p.id}">
-          <div class="cell-display ${pendVal?'':'empty'}" onclick="window._ePend('${p.id}')">${pendVal||'—'}<span class="edit-icon">✎</span></div>
-          <div class="input-wrap" id="pend_wrap_${p.id}" style="display:none">
-            <textarea class="cell-input active" id="pend_inp_${p.id}" rows="2">${pendVal}</textarea>
-            <button class="btn-confirm-save" onclick="window._sPend('${p.id}')">✔ Salvar</button>
-          </div>
-        </td>
-        <td class="col-contr check-col">
-          <input type="checkbox" class="status-check" ${d.contrato?'checked':''} title="Contrato assinado"
-            onchange="window._chk('${p.id}','contrato',this.checked)">
-        </td>
-        <td class="col-emp check-col">
-          <input type="checkbox" class="status-check" ${d.empenho?'checked':''} title="Empenho"
-            onchange="window._chk('${p.id}','empenho',this.checked)">
-        </td>
-        <td class="col-acao">
-          <button class="btn-delete" onclick="window._del('${p.id}','${p.num}')">🗑</button>
-        </td>
-      </tr>`;
-    });
+    const ps = g.processos.filter(p => matchP(p,f));
+    if (!ps.length) return;
+    grps++; vis += ps.length;
+    const open = groupOpen[g.id] !== false;
 
     const div = document.createElement('div');
     div.className = 'group';
     div.innerHTML = `
-      <div class="group-header ${isOpen?'open':''}" onclick="window._grp('${g.id}',this)">
+      <div class="group-header ${open?'open':''}" onclick="W._grp('${g.id}',this)">
         <div class="group-header-left">
           <span class="group-icon">${g.icone}</span>
           <span class="group-title">${g.tema}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span class="group-count">${procs.length} processo${procs.length!==1?'s':''}</span>
+          <span class="group-count">${ps.length} processo${ps.length!==1?'s':''}</span>
           <span class="chevron">▶</span>
         </div>
       </div>
-      <div class="group-body ${isOpen?'visible':''}" id="body_${g.id}">
+      <div class="group-body ${open?'visible':''}" id="body_${g.id}">
         <div class="scroll-hint">← deslize para ver mais →</div>
         <table class="proc-table">
           <thead><tr>
@@ -1130,7 +1071,9 @@ function render() {
             <th class="col-emp">Empenho</th>
             <th class="col-acao">Ação</th>
           </tr></thead>
-          <tbody>${rows}</tbody>
+          <tbody id="tbody_${g.id}">
+            ${ps.map((p,i)=>buildRow(p, g.processos.indexOf(p)===0)).join('')}
+          </tbody>
         </table>
       </div>`;
     ct.appendChild(div);
@@ -1138,171 +1081,199 @@ function render() {
 
   if (!grps) ct.innerHTML = '<div class="empty-state">🔍 Nenhum processo encontrado.</div>';
   document.getElementById('visibleCount').textContent = vis;
-  document.getElementById('totalCount').textContent   = GRUPOS_BASE.reduce((a,g)=>a+g.processos.filter(p=>!DB[p.id]?.deleted).length,0);
-  document.getElementById('groupCount').textContent   = grps + ' grupo' + (grps!==1?'s':'');
+  document.getElementById('totalCount').textContent   = GRUPOS.reduce((a,g)=>a+g.processos.filter(p=>!DB[p.id]?.deleted).length,0);
+  document.getElementById('groupCount').textContent   = grps+'grupo'+(grps!==1?'s':'');
 }
 
-// ═══════════════════════════════════════════════════════
-// HANDLERS — todos expostos em window._ para inline HTML
-// ═══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+// UPDATE ROW — atualiza só a linha afetada pelo Firestore
+// Não re-renderiza toda a tabela!
+// ════════════════════════════════════════════════════════
+function updateRow(pid) {
+  const row = document.querySelector(`tr[data-pid="${pid}"]`);
+  if (!row) return; // linha não visível com filtro ativo
 
-// Grupos
-window._grp = (gid, h) => {
+  const p = GRUPOS.flatMap(g=>g.processos).find(x=>x.id===pid);
+  if (!p) return;
+  const g = GRUPOS.find(g=>g.processos.some(x=>x.id===pid));
+  if (!g) return;
+  const isFirst = g.processos.indexOf(p) === 0;
+
+  const d = DB[pid];
+  const tv = d.tipo || p.tipo;
+  const dv = d.desc || p.desc;
+  const pv = d.pendencia || '';
+
+  // Atualiza classes da linha
+  row.className = (isFirst?'row-principal':'row-vinculado') + (d.prioridade?' row-priority':'');
+
+  // Tipo
+  const tDisp = row.querySelector(`#t_td_${pid} .cell-display`);
+  if (tDisp) tDisp.innerHTML = tbadge(tv) + '<span class="edit-icon">✎</span>';
+
+  // Descrição
+  const dDisp = row.querySelector(`#d_td_${pid} .cell-display`);
+  if (dDisp) { dDisp.innerHTML = dv+'<span class="edit-icon">✎</span>'; dDisp.title=dv; }
+  const dInp = document.getElementById('d_in_'+pid);
+  if (dInp && document.getElementById('d_wr_'+pid)?.style.display==='none') dInp.value=dv;
+
+  // Setor
+  const sDisp = row.querySelector(`#s_td_${pid} .cell-display`);
+  if (sDisp) {
+    sDisp.className = 'cell-display'+(d.setor?'':' empty');
+    sDisp.innerHTML = (d.setor?`<span class="setor-badge">${d.setor}</span>`:'—')+'<span class="edit-icon">✎</span>';
+  }
+
+  // Pendência
+  const pDisp = row.querySelector(`#p_td_${pid} .cell-display`);
+  if (pDisp) {
+    pDisp.className = 'cell-display'+(pv?'':' empty');
+    pDisp.innerHTML = (pv||'—')+'<span class="edit-icon">✎</span>';
+  }
+  const pInp = document.getElementById('p_in_'+pid);
+  if (pInp && document.getElementById('p_wr_'+pid)?.style.display==='none') pInp.value=pv;
+
+  // Checkboxes
+  const cb_c = document.getElementById(`contr_${pid}`) || row.querySelectorAll('.status-check')[0];
+  const cb_e = document.getElementById(`emp_${pid}`)   || row.querySelectorAll('.status-check')[1];
+  const cb_p = row.querySelector('.priority-check');
+  if (cb_c) cb_c.checked = !!d.contrato;
+  if (cb_e) cb_e.checked = !!d.empenho;
+  if (cb_p) cb_p.checked = !!d.prioridade;
+}
+
+// ════════════════════════════════════════════════════════
+// HANDLERS — namespace W para evitar conflito global
+// ════════════════════════════════════════════════════════
+const W = window.W = {};
+
+W._grp = (gid, h) => {
   const b = document.getElementById('body_'+gid);
   const open = b.classList.toggle('visible');
   h.classList.toggle('open', open);
   groupOpen[gid] = open;
 };
 
-// Checkbox genérico
-window._chk = (pid, field, val) => { saveField(pid, field, val); };
-
-// Priority row visual
-window._prow = (cb) => {
-  const row = cb.closest('tr');
-  if (row) row.classList.toggle('row-priority', cb.checked);
+// CHECKBOX
+W._chk = (pid, field, val) => {
+  DB[pid][field] = val;
+  save(pid);
 };
 
-// ── SETOR ──
-window._eSetor = (pid) => {
-  const td = document.getElementById('setor_td_'+pid);
-  td.querySelector('.cell-display').style.display = 'none';
-  const sel = document.getElementById('setor_sel_'+pid);
-  sel.classList.add('active'); sel.focus();
+// SETOR
+W._es = (pid) => {
+  const td = document.getElementById('s_td_'+pid);
+  td.querySelector('.cell-display').style.display='none';
+  const s = document.getElementById('s_sel_'+pid); s.classList.add('active'); s.focus();
 };
-window._sSetor = (pid, sel) => {
-  saveField(pid, 'setor', sel.value);
-  _xSetor(pid);
-};
-window._xSetor = (pid) => {
+W._ss = (pid, sel) => { DB[pid].setor = sel.value; save(pid); W._xs(pid); };
+W._xs = (pid) => {
   setTimeout(() => {
-    const td = document.getElementById('setor_td_'+pid); if (!td) return;
-    const d = DB[pid];
-    const disp = td.querySelector('.cell-display');
-    const sel  = document.getElementById('setor_sel_'+pid);
+    const td = document.getElementById('s_td_'+pid); if(!td)return;
+    const d=DB[pid]; const sel=document.getElementById('s_sel_'+pid);
     sel.classList.remove('active');
-    disp.style.display = '';
-    disp.className = 'cell-display' + (d.setor?'':' empty');
-    disp.innerHTML = (d.setor?`<span class="setor-badge">${d.setor}</span>`:'—') + '<span class="edit-icon">✎</span>';
-  }, 200);
+    const dp = td.querySelector('.cell-display'); dp.style.display='';
+    dp.className='cell-display'+(d.setor?'':' empty');
+    dp.innerHTML=(d.setor?`<span class="setor-badge">${d.setor}</span>`:'—')+'<span class="edit-icon">✎</span>';
+  },150);
 };
 
-// ── TIPO ──
-window._eTipo = (pid) => {
-  const td = document.getElementById('tipo_td_'+pid);
-  td.querySelector('.cell-display').style.display = 'none';
-  const sel = document.getElementById('tipo_sel_'+pid);
-  sel.classList.add('active'); sel.focus();
+// TIPO
+W._et = (pid) => {
+  const td=document.getElementById('t_td_'+pid);
+  td.querySelector('.cell-display').style.display='none';
+  const s=document.getElementById('t_sel_'+pid); s.classList.add('active'); s.focus();
 };
-window._sTipo = (pid, sel) => {
-  saveField(pid, 'tipo', sel.value);
-  _xTipo(pid);
-};
-window._xTipo = (pid) => {
-  setTimeout(() => {
-    const td = document.getElementById('tipo_td_'+pid); if (!td) return;
-    const tipoVal = DB[pid].tipo || (GRUPOS_BASE.flatMap(g=>g.processos).find(p=>p.id===pid)||{}).tipo || '';
-    const disp = td.querySelector('.cell-display');
-    const sel  = document.getElementById('tipo_sel_'+pid);
-    sel.classList.remove('active');
-    disp.style.display = '';
-    disp.innerHTML = badge(tipoVal) + '<span class="edit-icon">✎</span>';
-  }, 200);
+W._st = (pid, sel) => { DB[pid].tipo = sel.value; save(pid); W._xt(pid); };
+W._xt = (pid) => {
+  setTimeout(()=>{
+    const td=document.getElementById('t_td_'+pid); if(!td)return;
+    const tv=DB[pid].tipo||(GRUPOS.flatMap(g=>g.processos).find(p=>p.id===pid)||{}).tipo||'';
+    const sel=document.getElementById('t_sel_'+pid); sel.classList.remove('active');
+    const dp=td.querySelector('.cell-display'); dp.style.display='';
+    dp.innerHTML=tbadge(tv)+'<span class="edit-icon">✎</span>';
+  },150);
 };
 
-// ── PENDÊNCIA ──
-window._ePend = (pid) => {
-  const td = document.getElementById('pend_td_'+pid); if (!td) return;
-  td.querySelector('.cell-display').style.display = 'none';
-  const wrap = document.getElementById('pend_wrap_'+pid);
-  wrap.style.display = 'block';
-  const inp = document.getElementById('pend_inp_'+pid);
-  inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length);
+// PENDÊNCIA
+W._ep = (pid) => {
+  const td=document.getElementById('p_td_'+pid); if(!td)return;
+  td.querySelector('.cell-display').style.display='none';
+  const wr=document.getElementById('p_wr_'+pid); wr.style.display='block';
+  const inp=document.getElementById('p_in_'+pid); inp.focus();
 };
-window._sPend = (pid) => {
-  const inp = document.getElementById('pend_inp_'+pid);
-  const val = inp.value.trim();
-  saveField(pid, 'pendencia', val);
-  const td = document.getElementById('pend_td_'+pid); if (!td) return;
-  document.getElementById('pend_wrap_'+pid).style.display = 'none';
-  const disp = td.querySelector('.cell-display');
-  disp.style.display = '';
-  disp.className = 'cell-display' + (val?'':' empty');
-  disp.innerHTML = (val||'—') + '<span class="edit-icon">✎</span>';
+W._sp = (pid) => {
+  const inp=document.getElementById('p_in_'+pid);
+  const val=inp.value.trim();
+  DB[pid].pendencia=val; save(pid);
+  const td=document.getElementById('p_td_'+pid); if(!td)return;
+  document.getElementById('p_wr_'+pid).style.display='none';
+  const dp=td.querySelector('.cell-display'); dp.style.display='';
+  dp.className='cell-display'+(val?'':' empty');
+  dp.innerHTML=(val||'—')+'<span class="edit-icon">✎</span>';
 };
 
-// ── DESCRIÇÃO ──
-window._eDesc = (pid) => {
-  const td = document.getElementById('desc_td_'+pid); if (!td) return;
-  td.querySelector('.cell-display').style.display = 'none';
-  const wrap = document.getElementById('desc_wrap_'+pid);
-  wrap.style.display = 'block';
-  const inp = document.getElementById('desc_inp_'+pid);
-  inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length);
+// DESCRIÇÃO
+W._ed = (pid) => {
+  const td=document.getElementById('d_td_'+pid); if(!td)return;
+  td.querySelector('.cell-display').style.display='none';
+  const wr=document.getElementById('d_wr_'+pid); wr.style.display='block';
+  const inp=document.getElementById('d_in_'+pid); inp.focus();
 };
-window._sDesc = (pid) => {
-  const inp = document.getElementById('desc_inp_'+pid);
-  const val = inp.value.trim();
-  saveField(pid, 'desc', val);
-  const td = document.getElementById('desc_td_'+pid); if (!td) return;
-  document.getElementById('desc_wrap_'+pid).style.display = 'none';
-  const disp = td.querySelector('.cell-display');
-  disp.style.display = '';
-  disp.innerHTML = (val||'—') + '<span class="edit-icon">✎</span>';
+W._sd = (pid) => {
+  const inp=document.getElementById('d_in_'+pid);
+  const val=inp.value.trim();
+  DB[pid].desc=val; save(pid);
+  const td=document.getElementById('d_td_'+pid); if(!td)return;
+  document.getElementById('d_wr_'+pid).style.display='none';
+  const dp=td.querySelector('.cell-display'); dp.style.display='';
+  dp.innerHTML=(val||'—')+'<span class="edit-icon">✎</span>';
 };
 
-// ── DELETE ──
-window._del = (pid, num) => {
-  pendingDeleteId = pid;
-  document.getElementById('modalNum').textContent = num;
+// DELETE
+W._del = (pid, num) => {
+  pendingDeleteId=pid;
+  document.getElementById('modalNum').textContent=num;
   document.getElementById('deleteModal').classList.add('active');
 };
 window.closeModal = () => {
-  pendingDeleteId = null;
+  pendingDeleteId=null;
   document.getElementById('deleteModal').classList.remove('active');
 };
 window.confirmDelete = () => {
-  if (!pendingDeleteId) return;
-  DB[pendingDeleteId].deleted = true;
-  saveRecord(pendingDeleteId);
+  if(!pendingDeleteId)return;
+  DB[pendingDeleteId].deleted=true;
+  save(pendingDeleteId);
   closeModal();
-  const row = document.querySelector(`tr[data-pid="${pendingDeleteId}"]`);
-  if (row) {
-    row.style.transition = 'opacity 0.25s, transform 0.25s';
-    row.style.opacity = '0'; row.style.transform = 'translateX(30px)';
-    setTimeout(() => row.remove(), 260);
-  }
-  pendingDeleteId = null;
+  const row=document.querySelector(`tr[data-pid="${pendingDeleteId}"]`);
+  if(row){row.style.opacity='0';row.style.transform='translateX(30px)';row.style.transition='all .25s';setTimeout(()=>row.remove(),260);}
+  pendingDeleteId=null;
 };
-document.getElementById('deleteModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
-// ═══════════════════════════════════════════════════════
-// FILTROS — listeners
-// ═══════════════════════════════════════════════════════
-function populateTemas() {
-  const sel = document.getElementById('fTema');
-  GRUPOS_BASE.forEach(g => {
-    const o = document.createElement('option');
-    o.value = g.id; o.textContent = g.icone + ' ' + g.tema;
-    sel.appendChild(o);
-  });
-}
-window.clearFilters = clearFilters;
-
-['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id => {
-  const el = document.getElementById(id);
-  el.addEventListener('change', render);
-  if (id === 'fBusca') el.addEventListener('input', render);
+// ════════════════════════════════════════════════════════
+// FILTROS
+// ════════════════════════════════════════════════════════
+window.clearFilters = () => {
+  ['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id=>document.getElementById(id).value='');
+  render();
+};
+['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('change',render);
+  if(id==='fBusca')el.addEventListener('input',render);
 });
+function populateTemas() {
+  const sel=document.getElementById('fTema');
+  GRUPOS.forEach(g=>{ const o=document.createElement('option'); o.value=g.id; o.textContent=g.icone+' '+g.tema; sel.appendChild(o); });
+}
 
-// ═══════════════════════════════════════════════════════
-// INIT — renderiza imediatamente, Firebase re-renderiza ao conectar
-// ═══════════════════════════════════════════════════════
-initDB();
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
 populateTemas();
 render();
 setStatus('⏳ Conectando…', false);
 </script>
-
 </body>
 </html>
