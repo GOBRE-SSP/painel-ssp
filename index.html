@@ -880,15 +880,12 @@ const GRUPOS_BASE = [
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-let data      = {};
-let groupOpen = {};
+let data            = {};
+let groupOpen       = {};
 let pendingDeleteId = null;
-let saveTimer = null;
-let firebaseReady = false;
+let saveTimer       = null;
+let firebaseReady   = false;
 
-// ═══════════════════════════════════════════════════════
-// DEFAULTS — always initialize all processes from base data
-// ═══════════════════════════════════════════════════════
 function defaultRecord() {
   return { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:'', deleted:false };
 }
@@ -898,119 +895,62 @@ function ensureDefaults() {
     if (!data[p.id]) data[p.id] = defaultRecord();
     const d = data[p.id];
     if (d.prioridade === undefined) d.prioridade = false;
-    if (d.desc      === undefined) d.desc       = '';
-    if (d.tipo      === undefined) d.tipo       = '';
-    if (d.deleted   === undefined) d.deleted    = false;
+    if (d.desc       === undefined) d.desc       = '';
+    if (d.tipo       === undefined) d.tipo       = '';
+    if (d.deleted    === undefined) d.deleted    = false;
   }));
 }
 
-// ─── STEP 1: Render immediately (before Firebase responds) ───
-// (executed at bottom of script after all functions defined)
+// ═══════════════════════════════════════════════════════
+// FIREBASE SYNC — simples e direto
+// ═══════════════════════════════════════════════════════
+const STATE_DOC = doc(db, 'painel_ssp', 'state');
 
-// ─── Firebase real-time sync ───
-const STATE_DOC  = doc(db, 'painel_ssp', 'state');
-const SESSION_ID = Math.random().toString(36).slice(2);
-let isSaving     = false;
-let firstLoad    = true;
-let unsubscribe  = null;
-let retryTimer   = null;
-
-function conectarFirebase() {
-  clearTimeout(retryTimer);
-  if (unsubscribe) { try { unsubscribe(); } catch(e){} }
-
-  setStatus('⏳ Conectando…', false);
-
-  unsubscribe = onSnapshot(
-    STATE_DOC,
-    (snap) => {
-      firebaseReady = true;
-
-      // Merge remote data — always, even after our own save
-      if (snap.exists()) {
-        const remote = snap.data();
-        Object.keys(remote).forEach(pid => {
-          // Skip metadata and non-process keys
-          if (pid === '__meta' || !pid.startsWith('p')) return;
-          data[pid] = { ...defaultRecord(), ...remote[pid] };
-        });
-        ensureDefaults();
-      }
-
-      if (firstLoad) {
-        firstLoad = false;
-        setStatus('🟢 Conectado', false);
-        render();
-      } else if (!isSaving) {
-        // Update from another user
-        setStatus('🔄 Atualizado', false);
-        render();
-        setTimeout(() => setStatus('🟢 Conectado', false), 2000);
-      } else {
-        // Our own save confirmed by server
-        setStatus('✓ Salvo — ' + new Date().toLocaleTimeString('pt-BR'), false);
-        flashSaved();
-        isSaving = false;
-      }
-    },
-    (err) => {
-      firebaseReady = false;
-      isSaving = false; // unblock on error
-      console.warn('Firebase:', err.code, err.message);
-
-      if (err.code === 'permission-denied') {
-        setStatus('⛔ Sem permissão — verifique as regras do Firestore', true);
-      } else {
-        setStatus('📵 Sem conexão — tentando em 8s…', true);
-        retryTimer = setTimeout(conectarFirebase, 8000);
-      }
-    }
-  );
+// Função única para mesclar dados do Firestore no estado local
+function mergeRemote(remoteData) {
+  Object.keys(remoteData).forEach(pid => {
+    if (!pid.match(/^p\d+$/)) return; // só chaves tipo p1, p2, p10...
+    data[pid] = Object.assign(defaultRecord(), remoteData[pid]);
+  });
+  ensureDefaults();
 }
 
-conectarFirebase();
+// Listener em tempo real
+onSnapshot(STATE_DOC, (snap) => {
+  firebaseReady = true;
+  if (snap.exists()) mergeRemote(snap.data());
+  render();
+  setStatus('🟢 Conectado', false);
+}, (err) => {
+  firebaseReady = false;
+  console.warn('Firestore:', err.code);
+  setStatus('📵 Sem conexão (' + err.code + ')', true);
+  // Tenta reconectar automaticamente em 5s
+  setTimeout(() => location.reload(), 5000);
+});
 
 // ═══════════════════════════════════════════════════════
-// FIREBASE: SAVE (debounced 800ms)
+// SAVE — debounce 400ms, rápido e sem trava
 // ═══════════════════════════════════════════════════════
-async function saveState() {
+function saveState() {
   clearTimeout(saveTimer);
+  setStatus('💾 Salvando…', false);
   saveTimer = setTimeout(async () => {
     if (!firebaseReady) {
-      setStatus('⚠️ Sem conexão — aguarde reconexão', true);
+      setStatus('⚠️ Sem conexão', true);
       return;
     }
     try {
-      isSaving = true;
-      setStatus('💾 Salvando…', false);
-
-      // Build payload WITHOUT polluting data object with __meta
-      const payload = {};
-      Object.keys(data).forEach(pid => { payload[pid] = data[pid]; });
-      payload.__meta = { session: SESSION_ID, ts: Date.now() };
-
+      // Copia limpa — sem contaminar o objeto data
+      const payload = JSON.parse(JSON.stringify(data));
       await setDoc(STATE_DOC, payload, { merge: true });
-      // Status and isSaving=false handled by onSnapshot confirmation above
-      // Safety fallback in case onSnapshot doesn't fire
-      setTimeout(() => {
-        if (isSaving) {
-          isSaving = false;
-          setStatus('✓ Salvo', false);
-          flashSaved();
-        }
-      }, 5000);
+      setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
+      flashSaved();
     } catch(e) {
-      isSaving = false;
-      console.error('Erro ao salvar:', e.code, e.message);
-      if (e.code === 'unavailable' || (e.message && e.message.includes('offline'))) {
-        setStatus('📵 Sem conexão — tentando reconectar…', true);
-        firebaseReady = false;
-        retryTimer = setTimeout(conectarFirebase, 3000);
-      } else {
-        setStatus('⚠️ Erro ao salvar: ' + (e.code || e.message), true);
-      }
+      setStatus('⚠️ Falha ao salvar: ' + e.code, true);
+      console.error(e);
     }
-  }, 800);
+  }, 400);
 }
 
 function setStatus(msg, isErr) {
@@ -1460,12 +1400,13 @@ function populateTemaFilter() {
 window.clearFilters = clearFilters;
 
 // ═══════════════════════════════════════════════════════
-// INIT — render immediately, Firebase syncs on top
+// INIT
 // ═══════════════════════════════════════════════════════
-ensureDefaults();
-populateTemaFilter();
-render();
-setStatus('⏳ Conectando ao Firebase…', false);
+ensureDefaults();       // init empty records
+populateTemaFilter();   // populate dropdown
+render();               // render immediately with empty data
+setStatus('⏳ Conectando…', false);
+// onSnapshot above will call render() again as soon as Firebase responds (~1-2s)
 </script>
 
 </body>
