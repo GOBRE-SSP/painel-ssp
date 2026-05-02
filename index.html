@@ -187,7 +187,18 @@
   .group-header.open .chevron { transform: rotate(90deg); }
 
   .group-body { display: none; background: white; }
-  .group-body.visible { display: block; }
+  .group-body.visible { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Scroll hint on mobile */
+  .group-body.visible::after {
+    content: '';
+    display: none;
+  }
+  @media (max-width: 768px) {
+    .group-body.visible {
+      position: relative;
+    }
+  }
 
   /* ─── TABLE ─── */
   .proc-table {
@@ -485,28 +496,43 @@
   @media (max-width: 900px) {
     header h1 { font-size: 13px; }
     .filter-group input { width: 160px; }
-    .proc-table th:nth-child(7),
-    .proc-table td:nth-child(7) { display: none; }
   }
   @media (max-width: 600px) {
-    .main { padding: 10px; }
-    .filters-wrap { padding: 10px; }
+    .main { padding: 8px; }
+    .filters-wrap { padding: 8px 10px; }
     .filter-group input { width: 130px; }
-    .proc-table th:nth-child(6),
-    .proc-table td:nth-child(6),
-    .proc-table th:nth-child(8),
-    .proc-table td:nth-child(8) { display: none; }
+    .proc-table { font-size: 11px; }
+    .proc-table th { font-size: 9px; padding: 6px 8px; }
+    .proc-table td { padding: 6px 8px; }
+  }
+
+  /* Scroll indicator strip shown on mobile */
+  .scroll-hint {
+    display: none;
+    text-align: center;
+    font-size: 11px;
+    color: var(--gray-500);
+    padding: 4px 0 2px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    letter-spacing: 0.2px;
+  }
+  @media (max-width: 768px) {
+    .scroll-hint { display: block; }
   }
 
   /* col widths */
   .col-tipo   { width: 100px; }
-  .col-num    { width: 175px; }
-  .col-desc   { }
-  .col-setor  { width: 130px; }
-  .col-pend   { width: 190px; }
+  .col-num    { width: 170px; }
+  .col-desc   { min-width: 200px; }
+  .col-setor  { width: 120px; }
+  .col-pend   { width: 180px; }
   .col-contr  { width: 80px; text-align: center; }
   .col-emp    { width: 80px; text-align: center; }
   .col-acao   { width: 52px; text-align: center; }
+
+  /* Ensure table never wraps/collapses */
+  .proc-table { min-width: 1050px; }
 
   /* Delete button */
   .btn-delete {
@@ -1103,6 +1129,7 @@ function render() {
         </div>
       </div>
       <div class="group-body ${isOpen?'visible':''}" id="body_${g.id}">
+        <div class="scroll-hint">← deslize para ver mais →</div>
         <table class="proc-table">
           <thead>
             <tr>
