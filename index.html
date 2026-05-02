@@ -459,6 +459,25 @@
     margin-top: 2px;
   }
 
+  /* Save confirm button (visible on mobile, works on desktop too) */
+  .input-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .btn-confirm-save {
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    width: 100%;
+  }
+  .btn-confirm-save:hover { background: #15803d; }
+  .btn-confirm-save:active { opacity: 0.8; }
+
   /* ─── EMPTY STATE ─── */
   .empty-state {
     text-align: center;
@@ -885,6 +904,7 @@ let groupOpen       = {};
 let pendingDeleteId = null;
 let saveTimer       = null;
 let firebaseReady   = false;
+let lastSavedTs     = 0; // timestamp do último save feito por NÓS
 
 function defaultRecord() {
   return { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:'', deleted:false };
@@ -902,55 +922,68 @@ function ensureDefaults() {
 }
 
 // ═══════════════════════════════════════════════════════
-// FIREBASE SYNC — simples e direto
+// FIREBASE SYNC
 // ═══════════════════════════════════════════════════════
 const STATE_DOC = doc(db, 'painel_ssp', 'state');
 
-// Função única para mesclar dados do Firestore no estado local
 function mergeRemote(remoteData) {
   Object.keys(remoteData).forEach(pid => {
-    if (!pid.match(/^p\d+$/)) return; // só chaves tipo p1, p2, p10...
+    if (!pid.match(/^p\d+$/)) return;
     data[pid] = Object.assign(defaultRecord(), remoteData[pid]);
   });
   ensureDefaults();
 }
 
-// Listener em tempo real
 onSnapshot(STATE_DOC, (snap) => {
   firebaseReady = true;
-  if (snap.exists()) mergeRemote(snap.data());
-  render();
-  setStatus('🟢 Conectado', false);
+
+  const isOwnSave = (Date.now() - lastSavedTs) < 3000;
+
+  if (snap.exists()) {
+    mergeRemote(snap.data());
+  }
+
+  if (!isOwnSave) {
+    // Dados de outro usuário — re-renderiza
+    render();
+    setStatus('🟢 Conectado', false);
+  } else {
+    // Confirmação do nosso próprio save — só atualiza status
+    setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
+    flashSaved();
+  }
+
 }, (err) => {
   firebaseReady = false;
-  console.warn('Firestore:', err.code);
-  setStatus('📵 Sem conexão (' + err.code + ')', true);
-  // Tenta reconectar automaticamente em 5s
-  setTimeout(() => location.reload(), 5000);
+  console.warn('Firestore:', err.code, err.message);
+  setStatus('📵 ' + err.code, true);
+  // Reconecta em 6s
+  setTimeout(() => { firebaseReady = false; location.reload(); }, 6000);
 });
 
 // ═══════════════════════════════════════════════════════
-// SAVE — debounce 400ms, rápido e sem trava
+// SAVE — debounce 300ms
 // ═══════════════════════════════════════════════════════
 function saveState() {
   clearTimeout(saveTimer);
-  setStatus('💾 Salvando…', false);
   saveTimer = setTimeout(async () => {
     if (!firebaseReady) {
       setStatus('⚠️ Sem conexão', true);
       return;
     }
     try {
-      // Copia limpa — sem contaminar o objeto data
+      setStatus('💾 Salvando…', false);
+      lastSavedTs = Date.now();
       const payload = JSON.parse(JSON.stringify(data));
       await setDoc(STATE_DOC, payload, { merge: true });
       setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
       flashSaved();
     } catch(e) {
-      setStatus('⚠️ Falha ao salvar: ' + e.code, true);
-      console.error(e);
+      lastSavedTs = 0;
+      setStatus('⚠️ Falha: ' + (e.code || e.message), true);
+      console.error('saveState error:', e);
     }
-  }, 400);
+  }, 300);
 }
 
 function setStatus(msg, isErr) {
@@ -1052,11 +1085,13 @@ function render() {
 
       const descVal = d.desc || p.desc;
       const obsVal  = p.obs  || '';
-      const descDisplayHtml = `<div class="cell-display" id="desc_disp_${p.id}" onclick="window._startEditDesc('${p.id}',this)" title="${descVal}">${descVal}<span class="edit-icon">✎</span></div>`;
-      const descInputHtml   = `<textarea class="cell-input" id="desc_input_${p.id}" rows="2"
-        onblur="window._saveDesc('${p.id}',this)"
-        onkeydown="if(event.key==='Escape')window._cancelDesc('${p.id}',this)"
-      >${descVal}</textarea>`;
+      const descDisplayHtml = `<div class="cell-display" id="desc_disp_${p.id}" onclick="window._startEditDesc('${p.id}')" title="${descVal}">${descVal}<span class="edit-icon">✎</span></div>`;
+      const descInputHtml   = `<div class="input-wrap" id="desc_wrap_${p.id}" style="display:none">
+        <textarea class="cell-input active" id="desc_input_${p.id}" rows="2"
+          onkeydown="if(event.key==='Escape')window._cancelDesc('${p.id}',this)"
+        >${descVal}</textarea>
+        <button class="btn-confirm-save" ontouchend="window._saveDesc('${p.id}',document.getElementById('desc_input_${p.id}'))" onclick="window._saveDesc('${p.id}',document.getElementById('desc_input_${p.id}'))">✔ Salvar</button>
+      </div>`;
 
       const displaySetorDiv = d.setor
         ? `<div class="cell-display" onclick="window._startEditSetor('${p.id}',this)"><span class="setor-badge">${d.setor}</span><span class="edit-icon">✎</span></div>`
@@ -1097,10 +1132,12 @@ function render() {
         </td>
         <td class="col-pend editable-cell" id="pend_td_${p.id}">
           ${pendDisplay}
-          <textarea class="cell-input" id="pend_input_${p.id}" rows="2"
-            onblur="window._savePend('${p.id}',this)"
-            onkeydown="if(event.key==='Escape')window._cancelPend('${p.id}',this)"
-          >${pendValue}</textarea>
+          <div class="input-wrap" id="pend_wrap_${p.id}" style="display:none">
+            <textarea class="cell-input active" id="pend_input_${p.id}" rows="2"
+              onkeydown="if(event.key==='Escape')window._cancelPend('${p.id}',this)"
+            >${pendValue}</textarea>
+            <button class="btn-confirm-save" ontouchend="window._savePend('${p.id}',document.getElementById('pend_input_${p.id}'))" onclick="window._savePend('${p.id}',document.getElementById('pend_input_${p.id}'))">✔ Salvar</button>
+          </div>
         </td>
         <td class="col-contr check-col">
           <div class="check-wrap">
@@ -1221,10 +1258,12 @@ function reRenderSetorCell(pid) {
 window._startEditPend = function(pid) {
   const td   = document.getElementById('pend_td_' + pid);
   const disp = td.querySelector('.cell-display');
+  const wrap = document.getElementById('pend_wrap_' + pid);
   const inp  = document.getElementById('pend_input_' + pid);
   if (disp) disp.style.display = 'none';
-  inp.classList.add('active');
-  inp.focus(); inp.select();
+  wrap.style.display = 'block';
+  inp.focus();
+  inp.setSelectionRange(inp.value.length, inp.value.length);
 };
 window._savePend = function(pid, inp) {
   data[pid].pendencia = inp.value.trim();
@@ -1236,11 +1275,12 @@ window._cancelPend = function(pid, inp) {
   reRenderPendCell(pid);
 };
 function reRenderPendCell(pid) {
-  const d   = data[pid];
-  const td  = document.getElementById('pend_td_' + pid);
+  const d    = data[pid];
+  const td   = document.getElementById('pend_td_' + pid);
   if (!td) return;
-  document.getElementById('pend_input_' + pid).classList.remove('active');
+  const wrap = document.getElementById('pend_wrap_' + pid);
   const disp = td.querySelector('.cell-display');
+  if (wrap) wrap.style.display = 'none';
   if (disp) {
     disp.style.display = '';
     const val = d.pendencia || '';
@@ -1284,10 +1324,11 @@ function reRenderTipoCell(pid) {
 // ═══════════════════════════════════════════════════════
 window._startEditDesc = function(pid) {
   const disp = document.getElementById('desc_disp_' + pid);
+  const wrap = document.getElementById('desc_wrap_' + pid);
   const inp  = document.getElementById('desc_input_' + pid);
   if (disp) disp.style.display = 'none';
-  inp.classList.add('active');
-  inp.focus(); inp.select();
+  if (wrap) wrap.style.display = 'block';
+  if (inp)  { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
 };
 window._saveDesc = function(pid, inp) {
   data[pid].desc = inp.value.trim();
@@ -1303,9 +1344,9 @@ function reRenderDescCell(pid) {
   const p = findProc(pid);
   const descVal = data[pid].desc || (p ? p.desc : '');
   const disp = document.getElementById('desc_disp_' + pid);
-  const inp  = document.getElementById('desc_input_' + pid);
+  const wrap = document.getElementById('desc_wrap_' + pid);
   if (!disp) return;
-  inp.classList.remove('active');
+  if (wrap) wrap.style.display = 'none';
   disp.style.display = '';
   disp.title = descVal;
   disp.innerHTML = `${descVal}<span class="edit-icon">✎</span>`;
@@ -1402,11 +1443,10 @@ window.clearFilters = clearFilters;
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
-ensureDefaults();       // init empty records
-populateTemaFilter();   // populate dropdown
-render();               // render immediately with empty data
-setStatus('⏳ Conectando…', false);
-// onSnapshot above will call render() again as soon as Firebase responds (~1-2s)
+ensureDefaults();
+populateTemaFilter();
+render();                              // render vazio imediato
+setStatus('⏳ Conectando…', false);   // onSnapshot vai re-renderizar com dados reais
 </script>
 
 </body>
