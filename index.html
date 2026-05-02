@@ -745,10 +745,12 @@
 
 <script type="module">
 // ═══════════════════════════════════════════════════════
-// FIREBASE SETUP
+// FIREBASE — usando versão compatível e estável
 // ═══════════════════════════════════════════════════════
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
-import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
+import { initializeApp }          from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, doc,
+         updateDoc, onSnapshot,
+         setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCFQm4fbR4m4zM4zN-L0ovXx35SJQDTVPk",
@@ -761,247 +763,212 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+const STATE_DOC = doc(db, 'painel_ssp', 'state');
+
 // ═══════════════════════════════════════════════════════
-// DATA
+// DADOS BASE
 // ═══════════════════════════════════════════════════════
 const SETORES = ['DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO'];
 const TIPOS   = ['PRINCIPAL','ADITIVO','EXECUÇÃO','ATA','DISPENSA','ADESÃO','CESSÃO','LOCAÇÃO','MEDIÇÃO','OUTRO'];
 
 const GRUPOS_BASE = [
-  {
-    id:'g1', icone:'🏗️', tema:'Manutenção Predial',
-    processos:[
-      {id:'p1',  tipo:'PRINCIPAL', num:'00027.005168/2025-70', desc:'Manutenção Predial — processo principal'},
-      {id:'p2',  tipo:'EXECUÇÃO',  num:'00027.008809/2025-48', desc:'Exec. Ata Manut. Predial — Monte Claro'},
-      {id:'p3',  tipo:'ADITIVO',   num:'00027.001921/2026-39', desc:'Aditivo de valor — Monte Claro'},
-      {id:'p4',  tipo:'ADESÃO',    num:'00027.002855/2026-14', desc:'Nova adesão 2026 — IMEPI/Desenvolva/Pavicon/Monte Claro'},
-      {id:'p5',  tipo:'EXECUÇÃO',  num:'00027.008811/2025-17', desc:'Exec. Ata Manut. Predial — Assertiva'},
-      {id:'p6',  tipo:'EXECUÇÃO',  num:'00027.002490/2026-28', desc:'Processo de execução — Assertiva (2026)'},
-      {id:'p7',  tipo:'ADITIVO',   num:'00027.001663/2026-91', desc:'Aditivo de valor — Assertiva'},
-      {id:'p8',  tipo:'ADESÃO',    num:'00027.002149/2026-72', desc:'Nova adesão (2026) — Assertiva'},
-      {id:'p9',  tipo:'ATA',       num:'00027.001615/2026-01', desc:"Limpeza caixas d'água, fossas, desinsetização, roço, poda (Ata IMEPI)"},
-    ]
-  },
-  {
-    id:'g2', icone:'❄️', tema:'Ar-Condicionado',
-    processos:[
-      {id:'p10', tipo:'ATA',       num:'00027.004575/2025-60', desc:'Aquisição ar-condicionado — ATA'},
-      {id:'p11', tipo:'ADITIVO',   num:'00027.005736/2025-32', desc:'Aquisição ar-condicionado — ADITIVO'},
-      {id:'p12', tipo:'DISPENSA',  num:'00027.006514/2025-37', desc:'Aquisição ar-condicionado — DISPENSA'},
-      {id:'p13', tipo:'ADESÃO',    num:'00027.002351/2025-13', desc:'Manutenção ar — Nova Adesão (Concretizar)'},
-    ]
-  },
-  {
-    id:'g3', icone:'🪑', tema:'Móveis e Mobiliário',
-    processos:[
-      {id:'p14', tipo:'ATA',       num:'00027.004005/2025-70', desc:'Ata móveis — processo principal (25% aditivo)'},
-      {id:'p15', tipo:'ADITIVO',   num:'00027.005219/2025-63', desc:'Aditivo contrato nº 60'},
-      {id:'p16', tipo:'ADITIVO',   num:'00027.005224/2025-76', desc:'Aditivo contrato nº 61'},
-      {id:'p17', tipo:'DISPENSA',  num:'00027.006289/2025-39', desc:'DFD Móveis Planejados DG'},
-      {id:'p18', tipo:'ATA',       num:'00028.046579/2025-13', desc:'Ata móveis DGO'},
-      {id:'p19', tipo:'OUTRO',     num:'00027.009264/2025-97', desc:'DFD beliche — Ata DSUSP'},
-      {id:'p20', tipo:'DISPENSA',  num:'00027.008077/2025-96', desc:'Dispensa beliche e colchão'},
-    ]
-  },
-  {
-    id:'g4', icone:'🎨', tema:'Comunicação Visual',
-    processos:[
-      {id:'p21', tipo:'ATA',       num:'00027.008237/2024-16', desc:'Ata Comunicação Visual — processo principal'},
-      {id:'p22', tipo:'ADITIVO',   num:'00027.005943/2025-97', desc:'Comunicação Visual — ADITIVO (Empresa MAX)'},
-      {id:'p23', tipo:'EXECUÇÃO',  num:'00027.003047/2026-74', desc:'Processo de execução (Empresa MAX)'},
-      {id:'p24', tipo:'OUTRO',     num:'00027.007611/2025-47', desc:'Novo Contrato Com. Visual 2026 — Empresa Max'},
-      {id:'p25', tipo:'OUTRO',     num:'00027.002227/2026-39', desc:'Novo Contrato Com. Visual 2026 — Empresa Mega'},
-      {id:'p26', tipo:'OUTRO',     num:'00027.008105/2025-75', desc:'Placa de inauguração / placa de porta e outros'},
-    ]
-  },
-  {
-    id:'g5', icone:'🔥', tema:'Extintores e Segurança',
-    processos:[
-      {id:'p27', tipo:'ATA',       num:'00027.005996/2024-27', desc:'Ata extintores'},
-    ]
-  },
-  {
-    id:'g6', icone:'🏠', tema:'BEPI — Contratos de Serviços',
-    processos:[
-      {id:'p28', tipo:'ADITIVO',   num:'00027.009103/2024-12', desc:'Aditivo qualitativo BEPI'},
-      {id:'p29', tipo:'ADITIVO',   num:'00027.008029/2025-06', desc:'Aditivo de valor BEPI'},
-      {id:'p30', tipo:'ADITIVO',   num:'00027.000596/2026-97', desc:'Aditivo de vigência BEPI'},
-    ]
-  },
-  {
-    id:'g7', icone:'📦', tema:'Locação EMRI / LOCABOX',
-    processos:[
-      {id:'p31', tipo:'ATA',       num:'00027.002178/2026-34', desc:'Locação EMRI pré-fabricados climatizados (IMEPI / LOCABOX)'},
-    ]
-  },
-  {
-    id:'g8', icone:'⚡', tema:'Gerador de Energia',
-    processos:[
-      {id:'p32', tipo:'ATA',       num:'00027.002337/2026-09', desc:'Ata gerador'},
-      {id:'p33', tipo:'OUTRO',     num:'00027.000614/2026-31', desc:'Emergencial gerador'},
-    ]
-  },
-  {
-    id:'g9', icone:'☀️', tema:'Energia Fotovoltaica',
-    processos:[
-      {id:'p34', tipo:'ATA',       num:'00027.005637/2025-51', desc:'Ata energia fotovoltaica'},
-    ]
-  },
-  {
-    id:'g10', icone:'💼', tema:'Patrimônio e Gestão de Ativos',
-    processos:[
-      {id:'p35', tipo:'PRINCIPAL', num:'00027.001099/2026-14', desc:'Gerenciamento de ativos — Patrimônio'},
-      {id:'p36', tipo:'OUTRO',     num:'00027005943/2025-97',  desc:'Credenciamento de Empresas'},
-    ]
-  },
-  {
-    id:'g11', icone:'🏘️', tema:'Locação de Imóveis e Unidades',
-    processos:[
-      {id:'p37', tipo:'LOCAÇÃO',   num:'00027.006958/2025-72', desc:'Locação CASA X (TJ)'},
-      {id:'p38', tipo:'LOCAÇÃO',   num:'00027.003552/2025-38', desc:'Locação unidade PF — Picos'},
-      {id:'p39', tipo:'LOCAÇÃO',   num:'00027.010008/2025-42', desc:'Locação unidade Timon (Zanata)'},
-    ]
-  },
-  {
-    id:'g12', icone:'🤝', tema:'Cessão de Imóveis / Cooperação',
-    processos:[
-      {id:'p40', tipo:'CESSÃO',    num:'00027.010480/2025-85', desc:'Cessão da CODEVASF'},
-      {id:'p41', tipo:'CESSÃO',    num:'00027.005048/2025-72', desc:'Cessão SEFAZ para CIA Piracuruca'},
-      {id:'p42', tipo:'CESSÃO',    num:'00027.005619/2025-79', desc:'Cessão Altos'},
-    ]
-  },
-  {
-    id:'g13', icone:'🎯', tema:'Stand de Tiros — CEFAP / ACADEPOL',
-    processos:[
-      {id:'p43', tipo:'PRINCIPAL', num:'00027.008544/2025-88', desc:'Stand de tiros (CEFAP e ACADEPOL)'},
-    ]
-  },
-  {
-    id:'g14', icone:'⚖️', tema:'Desapropriação — Bom Jesus',
-    processos:[
-      {id:'p44', tipo:'PRINCIPAL', num:'00027.004660/2025-28', desc:'Desapropriação Bom Jesus'},
-    ]
-  },
-  {
-    id:'g15', icone:'🏛️', tema:'Construção 30° BPM — Barras-PI',
-    processos:[
-      {id:'p45', tipo:'ADITIVO',   num:'00027.002306/2026-40', desc:'Prorrogação prazo — Contrato nº 31/2025', obs:'HIGILAR CONSTRUÇÕES LTDA — Construção 30° BPM Barras-PI'},
-    ]
-  },
-  {
-    id:'g16', icone:'👥', tema:'CONVIVE',
-    processos:[
-      {id:'p46', tipo:'PRINCIPAL', num:'00027.003923/2025-81', desc:'CONVIVE'},
-    ]
-  },
+  { id:'g1', icone:'🏗️', tema:'Manutenção Predial', processos:[
+    {id:'p1',  tipo:'PRINCIPAL', num:'00027.005168/2025-70', desc:'Manutenção Predial — processo principal'},
+    {id:'p2',  tipo:'EXECUÇÃO',  num:'00027.008809/2025-48', desc:'Exec. Ata Manut. Predial — Monte Claro'},
+    {id:'p3',  tipo:'ADITIVO',   num:'00027.001921/2026-39', desc:'Aditivo de valor — Monte Claro'},
+    {id:'p4',  tipo:'ADESÃO',    num:'00027.002855/2026-14', desc:'Nova adesão 2026 — IMEPI/Desenvolva/Pavicon/Monte Claro'},
+    {id:'p5',  tipo:'EXECUÇÃO',  num:'00027.008811/2025-17', desc:'Exec. Ata Manut. Predial — Assertiva'},
+    {id:'p6',  tipo:'EXECUÇÃO',  num:'00027.002490/2026-28', desc:'Processo de execução — Assertiva (2026)'},
+    {id:'p7',  tipo:'ADITIVO',   num:'00027.001663/2026-91', desc:'Aditivo de valor — Assertiva'},
+    {id:'p8',  tipo:'ADESÃO',    num:'00027.002149/2026-72', desc:'Nova adesão (2026) — Assertiva'},
+    {id:'p9',  tipo:'ATA',       num:'00027.001615/2026-01', desc:"Limpeza caixas d'água, fossas, desinsetização, roço, poda (Ata IMEPI)"},
+  ]},
+  { id:'g2', icone:'❄️', tema:'Ar-Condicionado', processos:[
+    {id:'p10', tipo:'ATA',      num:'00027.004575/2025-60', desc:'Aquisição ar-condicionado — ATA'},
+    {id:'p11', tipo:'ADITIVO',  num:'00027.005736/2025-32', desc:'Aquisição ar-condicionado — ADITIVO'},
+    {id:'p12', tipo:'DISPENSA', num:'00027.006514/2025-37', desc:'Aquisição ar-condicionado — DISPENSA'},
+    {id:'p13', tipo:'ADESÃO',   num:'00027.002351/2025-13', desc:'Manutenção ar — Nova Adesão (Concretizar)'},
+  ]},
+  { id:'g3', icone:'🪑', tema:'Móveis e Mobiliário', processos:[
+    {id:'p14', tipo:'ATA',      num:'00027.004005/2025-70', desc:'Ata móveis — processo principal (25% aditivo)'},
+    {id:'p15', tipo:'ADITIVO',  num:'00027.005219/2025-63', desc:'Aditivo contrato nº 60'},
+    {id:'p16', tipo:'ADITIVO',  num:'00027.005224/2025-76', desc:'Aditivo contrato nº 61'},
+    {id:'p17', tipo:'DISPENSA', num:'00027.006289/2025-39', desc:'DFD Móveis Planejados DG'},
+    {id:'p18', tipo:'ATA',      num:'00028.046579/2025-13', desc:'Ata móveis DGO'},
+    {id:'p19', tipo:'OUTRO',    num:'00027.009264/2025-97', desc:'DFD beliche — Ata DSUSP'},
+    {id:'p20', tipo:'DISPENSA', num:'00027.008077/2025-96', desc:'Dispensa beliche e colchão'},
+  ]},
+  { id:'g4', icone:'🎨', tema:'Comunicação Visual', processos:[
+    {id:'p21', tipo:'ATA',      num:'00027.008237/2024-16', desc:'Ata Comunicação Visual — processo principal'},
+    {id:'p22', tipo:'ADITIVO',  num:'00027.005943/2025-97', desc:'Comunicação Visual — ADITIVO (Empresa MAX)'},
+    {id:'p23', tipo:'EXECUÇÃO', num:'00027.003047/2026-74', desc:'Processo de execução (Empresa MAX)'},
+    {id:'p24', tipo:'OUTRO',    num:'00027.007611/2025-47', desc:'Novo Contrato Com. Visual 2026 — Empresa Max'},
+    {id:'p25', tipo:'OUTRO',    num:'00027.002227/2026-39', desc:'Novo Contrato Com. Visual 2026 — Empresa Mega'},
+    {id:'p26', tipo:'OUTRO',    num:'00027.008105/2025-75', desc:'Placa de inauguração / placa de porta e outros'},
+  ]},
+  { id:'g5',  icone:'🔥', tema:'Extintores e Segurança',        processos:[{id:'p27', tipo:'ATA',      num:'00027.005996/2024-27', desc:'Ata extintores'}]},
+  { id:'g6',  icone:'🏠', tema:'BEPI — Contratos de Serviços',  processos:[
+    {id:'p28', tipo:'ADITIVO', num:'00027.009103/2024-12', desc:'Aditivo qualitativo BEPI'},
+    {id:'p29', tipo:'ADITIVO', num:'00027.008029/2025-06', desc:'Aditivo de valor BEPI'},
+    {id:'p30', tipo:'ADITIVO', num:'00027.000596/2026-97', desc:'Aditivo de vigência BEPI'},
+  ]},
+  { id:'g7',  icone:'📦', tema:'Locação EMRI / LOCABOX',        processos:[{id:'p31', tipo:'ATA',      num:'00027.002178/2026-34', desc:'Locação EMRI pré-fabricados climatizados (IMEPI / LOCABOX)'}]},
+  { id:'g8',  icone:'⚡', tema:'Gerador de Energia',            processos:[
+    {id:'p32', tipo:'ATA',   num:'00027.002337/2026-09', desc:'Ata gerador'},
+    {id:'p33', tipo:'OUTRO', num:'00027.000614/2026-31', desc:'Emergencial gerador'},
+  ]},
+  { id:'g9',  icone:'☀️', tema:'Energia Fotovoltaica',          processos:[{id:'p34', tipo:'ATA',       num:'00027.005637/2025-51', desc:'Ata energia fotovoltaica'}]},
+  { id:'g10', icone:'💼', tema:'Patrimônio e Gestão de Ativos', processos:[
+    {id:'p35', tipo:'PRINCIPAL', num:'00027.001099/2026-14', desc:'Gerenciamento de ativos — Patrimônio'},
+    {id:'p36', tipo:'OUTRO',     num:'00027005943/2025-97',  desc:'Credenciamento de Empresas'},
+  ]},
+  { id:'g11', icone:'🏘️', tema:'Locação de Imóveis e Unidades', processos:[
+    {id:'p37', tipo:'LOCAÇÃO', num:'00027.006958/2025-72', desc:'Locação CASA X (TJ)'},
+    {id:'p38', tipo:'LOCAÇÃO', num:'00027.003552/2025-38', desc:'Locação unidade PF — Picos'},
+    {id:'p39', tipo:'LOCAÇÃO', num:'00027.010008/2025-42', desc:'Locação unidade Timon (Zanata)'},
+  ]},
+  { id:'g12', icone:'🤝', tema:'Cessão de Imóveis / Cooperação', processos:[
+    {id:'p40', tipo:'CESSÃO', num:'00027.010480/2025-85', desc:'Cessão da CODEVASF'},
+    {id:'p41', tipo:'CESSÃO', num:'00027.005048/2025-72', desc:'Cessão SEFAZ para CIA Piracuruca'},
+    {id:'p42', tipo:'CESSÃO', num:'00027.005619/2025-79', desc:'Cessão Altos'},
+  ]},
+  { id:'g13', icone:'🎯', tema:'Stand de Tiros — CEFAP / ACADEPOL', processos:[{id:'p43', tipo:'PRINCIPAL', num:'00027.008544/2025-88', desc:'Stand de tiros (CEFAP e ACADEPOL)'}]},
+  { id:'g14', icone:'⚖️', tema:'Desapropriação — Bom Jesus',        processos:[{id:'p44', tipo:'PRINCIPAL', num:'00027.004660/2025-28', desc:'Desapropriação Bom Jesus'}]},
+  { id:'g15', icone:'🏛️', tema:'Construção 30° BPM — Barras-PI',    processos:[{id:'p45', tipo:'ADITIVO',   num:'00027.002306/2026-40', desc:'Prorrogação prazo — Contrato nº 31/2025', obs:'HIGILAR CONSTRUÇÕES LTDA — Construção 30° BPM Barras-PI'}]},
+  { id:'g16', icone:'👥', tema:'CONVIVE',                            processos:[{id:'p46', tipo:'PRINCIPAL', num:'00027.003923/2025-81', desc:'CONVIVE'}]},
 ];
 
 // ═══════════════════════════════════════════════════════
-// STATE
+// ESTADO LOCAL
 // ═══════════════════════════════════════════════════════
-let data            = {};
-let groupOpen       = {};
+let DB       = {};   // espelho do Firestore — atualizado pelo onSnapshot
+let groupOpen = {};
 let pendingDeleteId = null;
-let saveTimer       = null;
-let firebaseReady   = false;
-let lastSavedTs     = 0; // timestamp do último save feito por NÓS
+let saveTimer = null;
 
-function defaultRecord() {
+function emptyRec() {
   return { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:'', deleted:false };
 }
 
-function ensureDefaults() {
+function initDB() {
   GRUPOS_BASE.forEach(g => g.processos.forEach(p => {
-    if (!data[p.id]) data[p.id] = defaultRecord();
-    const d = data[p.id];
-    if (d.prioridade === undefined) d.prioridade = false;
-    if (d.desc       === undefined) d.desc       = '';
-    if (d.tipo       === undefined) d.tipo       = '';
-    if (d.deleted    === undefined) d.deleted    = false;
+    if (!DB[p.id]) DB[p.id] = emptyRec();
+    else {
+      const d = DB[p.id];
+      if (d.setor     === undefined) d.setor     = '';
+      if (d.pendencia === undefined) d.pendencia = '';
+      if (d.contrato  === undefined) d.contrato  = false;
+      if (d.empenho   === undefined) d.empenho   = false;
+      if (d.prioridade=== undefined) d.prioridade= false;
+      if (d.desc      === undefined) d.desc      = '';
+      if (d.tipo      === undefined) d.tipo      = '';
+      if (d.deleted   === undefined) d.deleted   = false;
+    }
   }));
 }
 
 // ═══════════════════════════════════════════════════════
-// FIREBASE SYNC
+// FIREBASE — LISTENER TEMPO REAL
+// Usa onSnapshot para escutar mudanças do servidor
 // ═══════════════════════════════════════════════════════
-const STATE_DOC = doc(db, 'painel_ssp', 'state');
-
-function mergeRemote(remoteData) {
-  Object.keys(remoteData).forEach(pid => {
-    if (!pid.match(/^p\d+$/)) return;
-    data[pid] = Object.assign(defaultRecord(), remoteData[pid]);
-  });
-  ensureDefaults();
-}
+let fbReady = false;
 
 onSnapshot(STATE_DOC, (snap) => {
-  firebaseReady = true;
-
-  const isOwnSave = (Date.now() - lastSavedTs) < 3000;
-
+  fbReady = true;
   if (snap.exists()) {
-    mergeRemote(snap.data());
+    // Substitui todo o DB pelo que está no servidor
+    const remote = snap.data();
+    Object.keys(remote).forEach(k => {
+      if (/^p\d+$/.test(k)) DB[k] = remote[k];
+    });
   }
-
-  if (!isOwnSave) {
-    // Dados de outro usuário — re-renderiza
-    render();
-    setStatus('🟢 Conectado', false);
-  } else {
-    // Confirmação do nosso próprio save — só atualiza status
-    setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
-    flashSaved();
-  }
-
+  initDB();
+  render();
+  setStatus('🟢 Conectado', false);
 }, (err) => {
-  firebaseReady = false;
-  console.warn('Firestore:', err.code, err.message);
-  setStatus('📵 ' + err.code, true);
-  // Reconecta em 6s
-  setTimeout(() => { firebaseReady = false; location.reload(); }, 6000);
+  fbReady = false;
+  console.error('Firestore error:', err.code, err.message);
+  if (err.code === 'permission-denied') {
+    setStatus('⛔ Permissão negada — verifique regras do Firestore', true);
+  } else {
+    setStatus('📵 Sem conexão (' + err.code + ') — recarregando em 8s', true);
+    setTimeout(() => location.reload(), 8000);
+  }
 });
 
 // ═══════════════════════════════════════════════════════
-// SAVE — debounce 300ms
+// FIREBASE — SALVAR CAMPO ÚNICO (mais eficiente e correto)
+// Salva apenas o campo alterado, não o documento inteiro
 // ═══════════════════════════════════════════════════════
-function saveState() {
+async function saveField(pid, field, value) {
+  DB[pid][field] = value;  // atualiza local imediatamente
+  if (!fbReady) { setStatus('⚠️ Sem conexão', true); return; }
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
-    if (!firebaseReady) {
-      setStatus('⚠️ Sem conexão', true);
-      return;
-    }
     try {
       setStatus('💾 Salvando…', false);
-      lastSavedTs = Date.now();
-      const payload = JSON.parse(JSON.stringify(data));
-      await setDoc(STATE_DOC, payload, { merge: true });
+      // updateDoc com notação de ponto salva só o campo específico
+      await updateDoc(STATE_DOC, { [`${pid}.${field}`]: value });
       setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
       flashSaved();
     } catch(e) {
-      lastSavedTs = 0;
-      setStatus('⚠️ Falha: ' + (e.code || e.message), true);
-      console.error('saveState error:', e);
+      // Documento pode não existir ainda — usa setDoc
+      if (e.code === 'not-found') {
+        try {
+          const payload = {};
+          Object.keys(DB).forEach(k => { payload[k] = DB[k]; });
+          await setDoc(STATE_DOC, payload);
+          setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
+          flashSaved();
+        } catch(e2) {
+          setStatus('⚠️ Erro: ' + e2.code, true);
+        }
+      } else {
+        setStatus('⚠️ Erro ao salvar: ' + e.code, true);
+        console.error('saveField error:', e);
+      }
     }
   }, 300);
 }
 
+// Para salvar o objeto de processo inteiro (ex: delete)
+async function saveRecord(pid) {
+  if (!fbReady) { setStatus('⚠️ Sem conexão', true); return; }
+  try {
+    setStatus('💾 Salvando…', false);
+    await updateDoc(STATE_DOC, { [pid]: DB[pid] });
+    setStatus('✓ Salvo ' + new Date().toLocaleTimeString('pt-BR'), false);
+    flashSaved();
+  } catch(e) {
+    if (e.code === 'not-found') {
+      const payload = {};
+      Object.keys(DB).forEach(k => { payload[k] = DB[k]; });
+      await setDoc(STATE_DOC, payload);
+      setStatus('✓ Salvo', false);
+    } else {
+      setStatus('⚠️ Erro: ' + e.code, true);
+    }
+  }
+}
+
 function setStatus(msg, isErr) {
   const el = document.getElementById('lastSaved');
+  if (!el) return;
   el.textContent = msg;
-  el.style.color = isErr ? '#fca5a5' : 'rgba(255,255,255,0.8)';
+  el.style.color = isErr ? '#fca5a5' : 'rgba(255,255,255,0.85)';
 }
 
 function flashSaved() {
   const ind = document.getElementById('saveIndicator');
+  if (!ind) return;
   ind.style.display = 'block';
   ind.style.animation = 'none';
   setTimeout(() => { ind.style.animation = 'fadeInOut 2s forwards'; }, 10);
-  setTimeout(() => { ind.style.display = 'none'; }, 2100);
+  setTimeout(() => { ind.style.display = 'none'; }, 2200);
 }
 
 // ═══════════════════════════════════════════════════════
-// FILTERS
+// FILTROS
 // ═══════════════════════════════════════════════════════
 function getFilters() {
   return {
@@ -1016,10 +983,12 @@ function getFilters() {
 }
 
 function matchProc(p, f) {
-  const d = data[p.id] || {};
+  const d = DB[p.id] || {};
   if (d.deleted) return false;
-  if (f.busca && !p.num.toLowerCase().includes(f.busca) && !(d.desc||p.desc).toLowerCase().includes(f.busca)) return false;
-  if (f.tipo  && (d.tipo||p.tipo) !== f.tipo) return false;
+  const tipoEfetivo = d.tipo || p.tipo;
+  const descEfetiva = d.desc || p.desc;
+  if (f.busca && !p.num.toLowerCase().includes(f.busca) && !descEfetiva.toLowerCase().includes(f.busca)) return false;
+  if (f.tipo  && tipoEfetivo !== f.tipo) return false;
   if (f.setor && d.setor !== f.setor) return false;
   if (f.contrato   === 'sim' && !d.contrato)   return false;
   if (f.contrato   === 'nao' &&  d.contrato)   return false;
@@ -1040,413 +1009,299 @@ function clearFilters() {
 // ═══════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════
-function typeBadge(tipo) {
-  const map = {
-    'PRINCIPAL':'t-principal','ADITIVO':'t-aditivo','EXECUÇÃO':'t-execucao',
-    'ATA':'t-ata','DISPENSA':'t-dispensa','ADESÃO':'t-adesao',
-    'CESSÃO':'t-cessao','LOCAÇÃO':'t-locacao','MEDIÇÃO':'t-medicao','OUTRO':'t-outro'
-  };
-  return `<span class="type-badge ${map[tipo]||'t-outro'}">${tipo}</span>`;
+const TYPE_CLASS = {
+  'PRINCIPAL':'t-principal','ADITIVO':'t-aditivo','EXECUÇÃO':'t-execucao',
+  'ATA':'t-ata','DISPENSA':'t-dispensa','ADESÃO':'t-adesao',
+  'CESSÃO':'t-cessao','LOCAÇÃO':'t-locacao','MEDIÇÃO':'t-medicao','OUTRO':'t-outro'
+};
+
+function badge(tipo) {
+  return `<span class="type-badge ${TYPE_CLASS[tipo]||'t-outro'}">${tipo}</span>`;
 }
 
 function render() {
-  const f = getFilters();
-  const container = document.getElementById('mainContent');
-  container.innerHTML = '';
+  const f   = getFilters();
+  const ct  = document.getElementById('mainContent');
+  ct.innerHTML = '';
+  let vis = 0, grps = 0;
 
-  let totalVisible = 0, groupsVisible = 0;
-
-  GRUPOS_BASE.forEach((g, gi) => {
+  GRUPOS_BASE.forEach(g => {
     if (f.tema && g.id !== f.tema) return;
-    const matchedProcs = g.processos.filter(p => matchProc(p, f));
-    if (matchedProcs.length === 0) return;
-
-    groupsVisible++;
-    totalVisible += matchedProcs.length;
+    const procs = g.processos.filter(p => matchProc(p, f));
+    if (!procs.length) return;
+    grps++; vis += procs.length;
 
     const isOpen = groupOpen[g.id] !== false;
-    const groupDiv = document.createElement('div');
-    groupDiv.className = 'group';
-    groupDiv.dataset.gid = g.id;
+    let rows = '';
 
-    let rowsHtml = '';
-    matchedProcs.forEach((p) => {
-      const isFirstInGroup = g.processos.indexOf(p) === 0;
-      const d = data[p.id];
+    procs.forEach(p => {
+      const isFirst = g.processos.indexOf(p) === 0;
+      const d = DB[p.id];
       const isPrio = !!d.prioridade;
-      let rowClass = isFirstInGroup ? 'row-principal' : 'row-vinculado';
-      if (isPrio) rowClass += ' row-priority';
-
+      const rowCls = (isFirst ? 'row-principal' : 'row-vinculado') + (isPrio ? ' row-priority' : '');
       const tipoVal = d.tipo || p.tipo;
-      const tipoSelectHtml = `<select class="setor-select" id="tipo_sel_${p.id}" onchange="window._saveTipo('${p.id}',this)" onblur="window._cancelTipo('${p.id}',this)">
-        ${TIPOS.map(t=>`<option value="${t}" ${tipoVal===t?'selected':''}>${t}</option>`).join('')}
-      </select>`;
-      const tipoDisplayHtml = `<div class="cell-display" id="tipo_disp_${p.id}" onclick="window._startEditTipo('${p.id}',this)">${typeBadge(tipoVal)}<span class="edit-icon">✎</span></div>`;
-
       const descVal = d.desc || p.desc;
-      const obsVal  = p.obs  || '';
-      const descDisplayHtml = `<div class="cell-display" id="desc_disp_${p.id}" onclick="window._startEditDesc('${p.id}')" title="${descVal}">${descVal}<span class="edit-icon">✎</span></div>`;
-      const descInputHtml   = `<div class="input-wrap" id="desc_wrap_${p.id}" style="display:none">
-        <textarea class="cell-input active" id="desc_input_${p.id}" rows="2"
-          onkeydown="if(event.key==='Escape')window._cancelDesc('${p.id}',this)"
-        >${descVal}</textarea>
-        <button class="btn-confirm-save" ontouchend="window._saveDesc('${p.id}',document.getElementById('desc_input_${p.id}'))" onclick="window._saveDesc('${p.id}',document.getElementById('desc_input_${p.id}'))">✔ Salvar</button>
-      </div>`;
+      const pendVal = d.pendencia || '';
 
-      const displaySetorDiv = d.setor
-        ? `<div class="cell-display" onclick="window._startEditSetor('${p.id}',this)"><span class="setor-badge">${d.setor}</span><span class="edit-icon">✎</span></div>`
-        : `<div class="cell-display empty" onclick="window._startEditSetor('${p.id}',this)">— <span class="edit-icon">✎</span></div>`;
-      const setorSelectHtml = `<select class="setor-select" id="ss_${p.id}" onchange="window._saveSetor('${p.id}',this)" onblur="window._cancelSetor('${p.id}',this)">
-        <option value="">-- Setor --</option>
-        ${SETORES.map(s=>`<option value="${s}" ${d.setor===s?'selected':''}>${s}</option>`).join('')}
-      </select>`;
-
-      const pendValue = d.pendencia || '';
-      const pendDisplay = pendValue
-        ? `<div class="cell-display" onclick="window._startEditPend('${p.id}',this)" title="${pendValue}">${pendValue}<span class="edit-icon">✎</span></div>`
-        : `<div class="cell-display empty" onclick="window._startEditPend('${p.id}',this)">— <span class="edit-icon">✎</span></div>`;
-
-      rowsHtml += `<tr class="${rowClass}" data-pid="${p.id}">
+      rows += `<tr class="${rowCls}" data-pid="${p.id}">
         <td class="col-prio check-col">
-          <div class="check-wrap">
-            <input type="checkbox" class="priority-check" id="prio_${p.id}"
-              ${d.prioridade?'checked':''} title="Marcar como prioritário"
-              onchange="window._saveCheck('${p.id}','prioridade',this.checked); window._togglePrioRow(this)">
-          </div>
+          <input type="checkbox" class="priority-check" ${isPrio?'checked':''}
+            title="Prioritário"
+            onchange="window._chk('${p.id}','prioridade',this.checked);window._prow(this)">
         </td>
         <td class="col-tipo editable-cell" id="tipo_td_${p.id}">
-          ${tipoDisplayHtml}${tipoSelectHtml}
+          <div class="cell-display" onclick="window._eTipo('${p.id}')">${badge(tipoVal)}<span class="edit-icon">✎</span></div>
+          <select class="setor-select" id="tipo_sel_${p.id}"
+            onchange="window._sTipo('${p.id}',this)"
+            onblur="window._xTipo('${p.id}')">
+            ${TIPOS.map(t=>`<option value="${t}"${tipoVal===t?' selected':''}>${t}</option>`).join('')}
+          </select>
         </td>
         <td class="col-num">
           <div class="level-indent">
-            ${isFirstInGroup ? '' : '<span class="level-arrow">↳</span>'}
+            ${isFirst?'':'<span class="level-arrow">↳</span>'}
             <span class="proc-num">${p.num}</span>
           </div>
         </td>
-        <td class="col-desc editable-cell desc-col" id="desc_td_${p.id}">
-          ${descDisplayHtml}${descInputHtml}
-          ${obsVal ? `<div class="desc-obs">${obsVal}</div>` : ''}
+        <td class="col-desc editable-cell" id="desc_td_${p.id}">
+          <div class="cell-display" onclick="window._eDesc('${p.id}')" title="${descVal}">${descVal}<span class="edit-icon">✎</span></div>
+          <div class="input-wrap" id="desc_wrap_${p.id}" style="display:none">
+            <textarea class="cell-input active" id="desc_inp_${p.id}" rows="2">${descVal}</textarea>
+            <button class="btn-confirm-save" onclick="window._sDesc('${p.id}')">✔ Salvar</button>
+          </div>
+          ${p.obs?`<div class="desc-obs">${p.obs}</div>`:''}
         </td>
         <td class="col-setor editable-cell" id="setor_td_${p.id}">
-          ${displaySetorDiv}${setorSelectHtml}
+          <div class="cell-display ${d.setor?'':'empty'}" onclick="window._eSetor('${p.id}')">
+            ${d.setor?`<span class="setor-badge">${d.setor}</span>`:'—'}<span class="edit-icon">✎</span>
+          </div>
+          <select class="setor-select" id="setor_sel_${p.id}"
+            onchange="window._sSetor('${p.id}',this)"
+            onblur="window._xSetor('${p.id}')">
+            <option value="">-- Setor --</option>
+            ${SETORES.map(s=>`<option value="${s}"${d.setor===s?' selected':''}>${s}</option>`).join('')}
+          </select>
         </td>
         <td class="col-pend editable-cell" id="pend_td_${p.id}">
-          ${pendDisplay}
+          <div class="cell-display ${pendVal?'':'empty'}" onclick="window._ePend('${p.id}')">${pendVal||'—'}<span class="edit-icon">✎</span></div>
           <div class="input-wrap" id="pend_wrap_${p.id}" style="display:none">
-            <textarea class="cell-input active" id="pend_input_${p.id}" rows="2"
-              onkeydown="if(event.key==='Escape')window._cancelPend('${p.id}',this)"
-            >${pendValue}</textarea>
-            <button class="btn-confirm-save" ontouchend="window._savePend('${p.id}',document.getElementById('pend_input_${p.id}'))" onclick="window._savePend('${p.id}',document.getElementById('pend_input_${p.id}'))">✔ Salvar</button>
+            <textarea class="cell-input active" id="pend_inp_${p.id}" rows="2">${pendVal}</textarea>
+            <button class="btn-confirm-save" onclick="window._sPend('${p.id}')">✔ Salvar</button>
           </div>
         </td>
         <td class="col-contr check-col">
-          <div class="check-wrap">
-            <input type="checkbox" class="status-check" id="contr_${p.id}"
-              ${d.contrato?'checked':''} title="Contrato assinado"
-              onchange="window._saveCheck('${p.id}','contrato',this.checked)">
-          </div>
+          <input type="checkbox" class="status-check" ${d.contrato?'checked':''} title="Contrato assinado"
+            onchange="window._chk('${p.id}','contrato',this.checked)">
         </td>
         <td class="col-emp check-col">
-          <div class="check-wrap">
-            <input type="checkbox" class="status-check" id="emp_${p.id}"
-              ${d.empenho?'checked':''} title="Empenho realizado"
-              onchange="window._saveCheck('${p.id}','empenho',this.checked)">
-          </div>
+          <input type="checkbox" class="status-check" ${d.empenho?'checked':''} title="Empenho"
+            onchange="window._chk('${p.id}','empenho',this.checked)">
         </td>
         <td class="col-acao">
-          <button class="btn-delete" title="Excluir processo" onclick="window._askDelete('${p.id}','${p.num}')">🗑</button>
+          <button class="btn-delete" onclick="window._del('${p.id}','${p.num}')">🗑</button>
         </td>
       </tr>`;
     });
 
-    groupDiv.innerHTML = `
-      <div class="group-header ${isOpen?'open':''}" onclick="window._toggleGroup('${g.id}',this)">
+    const div = document.createElement('div');
+    div.className = 'group';
+    div.innerHTML = `
+      <div class="group-header ${isOpen?'open':''}" onclick="window._grp('${g.id}',this)">
         <div class="group-header-left">
           <span class="group-icon">${g.icone}</span>
           <span class="group-title">${g.tema}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span class="group-count">${matchedProcs.length} processo${matchedProcs.length>1?'s':''}</span>
+          <span class="group-count">${procs.length} processo${procs.length!==1?'s':''}</span>
           <span class="chevron">▶</span>
         </div>
       </div>
       <div class="group-body ${isOpen?'visible':''}" id="body_${g.id}">
         <div class="scroll-hint">← deslize para ver mais →</div>
         <table class="proc-table">
-          <thead>
-            <tr>
-              <th class="col-prio th-prio">🔴 Prior.</th>
-              <th class="col-tipo">Tipo ✎</th>
-              <th class="col-num">Nº do Processo</th>
-              <th class="col-desc">Objeto / Descrição ✎</th>
-              <th class="col-setor">Setor Atual ✎</th>
-              <th class="col-pend">Pendência ✎</th>
-              <th class="col-contr">Contrato Assinado</th>
-              <th class="col-emp">Empenho</th>
-              <th class="col-acao">Ação</th>
-            </tr>
-          </thead>
-          <tbody>${rowsHtml}</tbody>
+          <thead><tr>
+            <th class="col-prio th-prio">🔴</th>
+            <th class="col-tipo">Tipo ✎</th>
+            <th class="col-num">Nº do Processo</th>
+            <th class="col-desc">Objeto / Descrição ✎</th>
+            <th class="col-setor">Setor Atual ✎</th>
+            <th class="col-pend">Pendência ✎</th>
+            <th class="col-contr">Contrato</th>
+            <th class="col-emp">Empenho</th>
+            <th class="col-acao">Ação</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
         </table>
       </div>`;
-    container.appendChild(groupDiv);
+    ct.appendChild(div);
   });
 
-  if (groupsVisible === 0)
-    container.innerHTML = '<div class="empty-state">🔍 Nenhum processo encontrado para os filtros selecionados.</div>';
-
-  document.getElementById('visibleCount').textContent = totalVisible;
-  document.getElementById('totalCount').textContent   = getTotalProcs();
-  document.getElementById('groupCount').textContent   = groupsVisible + ' grupo' + (groupsVisible!==1?'s':'');
-}
-
-function getTotalProcs() {
-  return GRUPOS_BASE.reduce((a,g) => a + g.processos.filter(p => !(data[p.id]||{}).deleted).length, 0);
+  if (!grps) ct.innerHTML = '<div class="empty-state">🔍 Nenhum processo encontrado.</div>';
+  document.getElementById('visibleCount').textContent = vis;
+  document.getElementById('totalCount').textContent   = GRUPOS_BASE.reduce((a,g)=>a+g.processos.filter(p=>!DB[p.id]?.deleted).length,0);
+  document.getElementById('groupCount').textContent   = grps + ' grupo' + (grps!==1?'s':'');
 }
 
 // ═══════════════════════════════════════════════════════
-// TOGGLE GROUP
+// HANDLERS — todos expostos em window._ para inline HTML
 // ═══════════════════════════════════════════════════════
-window._toggleGroup = function(gid, headerEl) {
-  const body = document.getElementById('body_' + gid);
-  const isOpen = body.classList.contains('visible');
-  body.classList.toggle('visible', !isOpen);
-  headerEl.classList.toggle('open', !isOpen);
-  groupOpen[gid] = !isOpen;
+
+// Grupos
+window._grp = (gid, h) => {
+  const b = document.getElementById('body_'+gid);
+  const open = b.classList.toggle('visible');
+  h.classList.toggle('open', open);
+  groupOpen[gid] = open;
 };
 
-// ═══════════════════════════════════════════════════════
-// EDIT: SETOR
-// ═══════════════════════════════════════════════════════
-window._startEditSetor = function(pid) {
-  const td = document.getElementById('setor_td_' + pid);
-  const disp = td.querySelector('.cell-display');
-  const sel  = document.getElementById('ss_' + pid);
-  if (disp) disp.style.display = 'none';
-  sel.classList.add('active');
-  sel.focus();
+// Checkbox genérico
+window._chk = (pid, field, val) => { saveField(pid, field, val); };
+
+// Priority row visual
+window._prow = (cb) => {
+  const row = cb.closest('tr');
+  if (row) row.classList.toggle('row-priority', cb.checked);
 };
-window._saveSetor = function(pid, sel) {
-  data[pid].setor = sel.value;
-  saveState();
-  reRenderSetorCell(pid);
+
+// ── SETOR ──
+window._eSetor = (pid) => {
+  const td = document.getElementById('setor_td_'+pid);
+  td.querySelector('.cell-display').style.display = 'none';
+  const sel = document.getElementById('setor_sel_'+pid);
+  sel.classList.add('active'); sel.focus();
 };
-window._cancelSetor = function(pid) {
-  setTimeout(() => reRenderSetorCell(pid), 150);
+window._sSetor = (pid, sel) => {
+  saveField(pid, 'setor', sel.value);
+  _xSetor(pid);
 };
-function reRenderSetorCell(pid) {
-  const d = data[pid];
-  const td = document.getElementById('setor_td_' + pid);
-  if (!td) return;
-  document.getElementById('ss_' + pid).classList.remove('active');
-  const disp = td.querySelector('.cell-display');
-  if (disp) {
+window._xSetor = (pid) => {
+  setTimeout(() => {
+    const td = document.getElementById('setor_td_'+pid); if (!td) return;
+    const d = DB[pid];
+    const disp = td.querySelector('.cell-display');
+    const sel  = document.getElementById('setor_sel_'+pid);
+    sel.classList.remove('active');
     disp.style.display = '';
-    if (d.setor) {
-      disp.className = 'cell-display';
-      disp.innerHTML = `<span class="setor-badge">${d.setor}</span><span class="edit-icon">✎</span>`;
-    } else {
-      disp.className = 'cell-display empty';
-      disp.innerHTML = `— <span class="edit-icon">✎</span>`;
-    }
-  }
-}
+    disp.className = 'cell-display' + (d.setor?'':' empty');
+    disp.innerHTML = (d.setor?`<span class="setor-badge">${d.setor}</span>`:'—') + '<span class="edit-icon">✎</span>';
+  }, 200);
+};
 
-// ═══════════════════════════════════════════════════════
-// EDIT: PENDÊNCIA
-// ═══════════════════════════════════════════════════════
-window._startEditPend = function(pid) {
-  const td   = document.getElementById('pend_td_' + pid);
-  const disp = td.querySelector('.cell-display');
-  const wrap = document.getElementById('pend_wrap_' + pid);
-  const inp  = document.getElementById('pend_input_' + pid);
-  if (disp) disp.style.display = 'none';
+// ── TIPO ──
+window._eTipo = (pid) => {
+  const td = document.getElementById('tipo_td_'+pid);
+  td.querySelector('.cell-display').style.display = 'none';
+  const sel = document.getElementById('tipo_sel_'+pid);
+  sel.classList.add('active'); sel.focus();
+};
+window._sTipo = (pid, sel) => {
+  saveField(pid, 'tipo', sel.value);
+  _xTipo(pid);
+};
+window._xTipo = (pid) => {
+  setTimeout(() => {
+    const td = document.getElementById('tipo_td_'+pid); if (!td) return;
+    const tipoVal = DB[pid].tipo || (GRUPOS_BASE.flatMap(g=>g.processos).find(p=>p.id===pid)||{}).tipo || '';
+    const disp = td.querySelector('.cell-display');
+    const sel  = document.getElementById('tipo_sel_'+pid);
+    sel.classList.remove('active');
+    disp.style.display = '';
+    disp.innerHTML = badge(tipoVal) + '<span class="edit-icon">✎</span>';
+  }, 200);
+};
+
+// ── PENDÊNCIA ──
+window._ePend = (pid) => {
+  const td = document.getElementById('pend_td_'+pid); if (!td) return;
+  td.querySelector('.cell-display').style.display = 'none';
+  const wrap = document.getElementById('pend_wrap_'+pid);
   wrap.style.display = 'block';
-  inp.focus();
-  inp.setSelectionRange(inp.value.length, inp.value.length);
+  const inp = document.getElementById('pend_inp_'+pid);
+  inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length);
 };
-window._savePend = function(pid, inp) {
-  data[pid].pendencia = inp.value.trim();
-  saveState();
-  reRenderPendCell(pid);
-};
-window._cancelPend = function(pid, inp) {
-  inp.value = data[pid].pendencia || '';
-  reRenderPendCell(pid);
-};
-function reRenderPendCell(pid) {
-  const d    = data[pid];
-  const td   = document.getElementById('pend_td_' + pid);
-  if (!td) return;
-  const wrap = document.getElementById('pend_wrap_' + pid);
+window._sPend = (pid) => {
+  const inp = document.getElementById('pend_inp_'+pid);
+  const val = inp.value.trim();
+  saveField(pid, 'pendencia', val);
+  const td = document.getElementById('pend_td_'+pid); if (!td) return;
+  document.getElementById('pend_wrap_'+pid).style.display = 'none';
   const disp = td.querySelector('.cell-display');
-  if (wrap) wrap.style.display = 'none';
-  if (disp) {
-    disp.style.display = '';
-    const val = d.pendencia || '';
-    disp.className = val ? 'cell-display' : 'cell-display empty';
-    disp.innerHTML  = val ? `${val}<span class="edit-icon">✎</span>` : `— <span class="edit-icon">✎</span>`;
-    disp.title = val;
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// EDIT: TIPO
-// ═══════════════════════════════════════════════════════
-window._startEditTipo = function(pid) {
-  const disp = document.getElementById('tipo_disp_' + pid);
-  const sel  = document.getElementById('tipo_sel_' + pid);
-  if (disp) disp.style.display = 'none';
-  sel.classList.add('active');
-  sel.focus();
-};
-window._saveTipo = function(pid, sel) {
-  data[pid].tipo = sel.value;
-  saveState();
-  reRenderTipoCell(pid);
-};
-window._cancelTipo = function(pid) {
-  setTimeout(() => reRenderTipoCell(pid), 150);
-};
-function reRenderTipoCell(pid) {
-  const p = findProc(pid);
-  const tipoVal = data[pid].tipo || (p ? p.tipo : '');
-  const disp = document.getElementById('tipo_disp_' + pid);
-  const sel  = document.getElementById('tipo_sel_' + pid);
-  if (!disp) return;
-  sel.classList.remove('active');
   disp.style.display = '';
-  disp.innerHTML = `${typeBadge(tipoVal)}<span class="edit-icon">✎</span>`;
-}
+  disp.className = 'cell-display' + (val?'':' empty');
+  disp.innerHTML = (val||'—') + '<span class="edit-icon">✎</span>';
+};
 
-// ═══════════════════════════════════════════════════════
-// EDIT: DESCRIÇÃO
-// ═══════════════════════════════════════════════════════
-window._startEditDesc = function(pid) {
-  const disp = document.getElementById('desc_disp_' + pid);
-  const wrap = document.getElementById('desc_wrap_' + pid);
-  const inp  = document.getElementById('desc_input_' + pid);
-  if (disp) disp.style.display = 'none';
-  if (wrap) wrap.style.display = 'block';
-  if (inp)  { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+// ── DESCRIÇÃO ──
+window._eDesc = (pid) => {
+  const td = document.getElementById('desc_td_'+pid); if (!td) return;
+  td.querySelector('.cell-display').style.display = 'none';
+  const wrap = document.getElementById('desc_wrap_'+pid);
+  wrap.style.display = 'block';
+  const inp = document.getElementById('desc_inp_'+pid);
+  inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length);
 };
-window._saveDesc = function(pid, inp) {
-  data[pid].desc = inp.value.trim();
-  saveState();
-  reRenderDescCell(pid);
-};
-window._cancelDesc = function(pid, inp) {
-  const p = findProc(pid);
-  inp.value = data[pid].desc || (p ? p.desc : '');
-  reRenderDescCell(pid);
-};
-function reRenderDescCell(pid) {
-  const p = findProc(pid);
-  const descVal = data[pid].desc || (p ? p.desc : '');
-  const disp = document.getElementById('desc_disp_' + pid);
-  const wrap = document.getElementById('desc_wrap_' + pid);
-  if (!disp) return;
-  if (wrap) wrap.style.display = 'none';
+window._sDesc = (pid) => {
+  const inp = document.getElementById('desc_inp_'+pid);
+  const val = inp.value.trim();
+  saveField(pid, 'desc', val);
+  const td = document.getElementById('desc_td_'+pid); if (!td) return;
+  document.getElementById('desc_wrap_'+pid).style.display = 'none';
+  const disp = td.querySelector('.cell-display');
   disp.style.display = '';
-  disp.title = descVal;
-  disp.innerHTML = `${descVal}<span class="edit-icon">✎</span>`;
-}
-
-// ═══════════════════════════════════════════════════════
-// CHECKBOXES
-// ═══════════════════════════════════════════════════════
-window._saveCheck = function(pid, field, val) {
-  data[pid][field] = val;
-  saveState();
+  disp.innerHTML = (val||'—') + '<span class="edit-icon">✎</span>';
 };
 
-// ═══════════════════════════════════════════════════════
-// PRIORITY ROW TOGGLE
-// ═══════════════════════════════════════════════════════
-window._togglePrioRow = function(checkbox) {
-  const row = checkbox.closest('tr');
-  if (!row) return;
-  if (checkbox.checked) row.classList.add('row-priority');
-  else row.classList.remove('row-priority');
-};
-
-// ═══════════════════════════════════════════════════════
-// DELETE
-// ═══════════════════════════════════════════════════════
-window._askDelete = function(pid, num) {
+// ── DELETE ──
+window._del = (pid, num) => {
   pendingDeleteId = pid;
   document.getElementById('modalNum').textContent = num;
   document.getElementById('deleteModal').classList.add('active');
 };
-
-window.closeModal = function() {
+window.closeModal = () => {
   pendingDeleteId = null;
   document.getElementById('deleteModal').classList.remove('active');
 };
-
-window.confirmDelete = function() {
+window.confirmDelete = () => {
   if (!pendingDeleteId) return;
-  data[pendingDeleteId].deleted = true;
-  saveState();
+  DB[pendingDeleteId].deleted = true;
+  saveRecord(pendingDeleteId);
   closeModal();
   const row = document.querySelector(`tr[data-pid="${pendingDeleteId}"]`);
   if (row) {
     row.style.transition = 'opacity 0.25s, transform 0.25s';
-    row.style.opacity = '0';
-    row.style.transform = 'translateX(30px)';
-    setTimeout(() => {
-      row.remove();
-      document.getElementById('visibleCount').textContent =
-        Math.max(0, parseInt(document.getElementById('visibleCount').textContent) - 1);
-      document.getElementById('totalCount').textContent = getTotalProcs();
-    }, 260);
+    row.style.opacity = '0'; row.style.transform = 'translateX(30px)';
+    setTimeout(() => row.remove(), 260);
   }
   pendingDeleteId = null;
 };
-
-document.getElementById('deleteModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
+document.getElementById('deleteModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 
 // ═══════════════════════════════════════════════════════
-// HELPERS
+// FILTROS — listeners
 // ═══════════════════════════════════════════════════════
-function findProc(pid) {
-  for (const g of GRUPOS_BASE) {
-    const p = g.processos.find(x => x.id === pid);
-    if (p) return p;
-  }
-  return null;
-}
-
-function populateTemaFilter() {
+function populateTemas() {
   const sel = document.getElementById('fTema');
   GRUPOS_BASE.forEach(g => {
-    const opt = document.createElement('option');
-    opt.value = g.id;
-    opt.textContent = g.icone + ' ' + g.tema;
-    sel.appendChild(opt);
+    const o = document.createElement('option');
+    o.value = g.id; o.textContent = g.icone + ' ' + g.tema;
+    sel.appendChild(o);
   });
 }
-
-// ═══════════════════════════════════════════════════════
-// FILTER LISTENERS
-// ═══════════════════════════════════════════════════════
-['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id => {
-  document.getElementById(id).addEventListener('change', render);
-  if (id === 'fBusca') document.getElementById(id).addEventListener('input', render);
-});
-
-// Expose clearFilters globally (called from HTML onclick)
 window.clearFilters = clearFilters;
 
+['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('change', render);
+  if (id === 'fBusca') el.addEventListener('input', render);
+});
+
 // ═══════════════════════════════════════════════════════
-// INIT
+// INIT — renderiza imediatamente, Firebase re-renderiza ao conectar
 // ═══════════════════════════════════════════════════════
-ensureDefaults();
-populateTemaFilter();
-render();                              // render vazio imediato
-setStatus('⏳ Conectando…', false);   // onSnapshot vai re-renderizar com dados reais
+initDB();
+populateTemas();
+render();
+setStatus('⏳ Conectando…', false);
 </script>
 
 </body>
