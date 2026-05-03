@@ -406,7 +406,7 @@
   .mv-overlay.active { opacity: 1; pointer-events: all; }
   .mv-modal {
     background: white; border-radius: 12px;
-    width: 90%; max-width: 440px;
+    width: 92%; max-width: 560px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     transform: translateY(16px); transition: transform 0.2s; overflow: hidden;
   }
@@ -429,6 +429,79 @@
     padding: 9px 10px; font-size: 13px; font-family: inherit; outline: none;
   }
   .mv-body select:focus { border-color: var(--blue); }
+  .mv-tabs { display: flex; border-bottom: 2px solid var(--gray-200); }
+  .mv-tab {
+    flex: 1; padding: 10px; text-align: center;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    color: var(--gray-500); border-bottom: 3px solid transparent;
+    margin-bottom: -2px; transition: all 0.15s;
+  }
+  .mv-tab.active { color: var(--navy); border-bottom-color: var(--blue); }
+  .mv-tab-body { padding: 18px; display: none; }
+  .mv-tab-body.active { display: block; }
+
+  /* Reorder list — drag and drop */
+  .mv-order-list {
+    display: flex; flex-direction: column; gap: 5px;
+    max-height: 420px; overflow-y: auto;
+    padding: 2px;
+  }
+  .mv-order-item {
+    display: flex; align-items: center; gap: 10px;
+    background: white; border: 1.5px solid var(--gray-200);
+    border-radius: 8px; padding: 10px 12px; font-size: 12px;
+    cursor: grab; user-select: none;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
+    touch-action: none;
+  }
+  .mv-order-item:active { cursor: grabbing; }
+  .mv-order-item.dragging {
+    opacity: 0.4; border-style: dashed; border-color: var(--blue);
+  }
+  .mv-order-item.drag-over {
+    border-color: var(--blue); background: var(--blue-light);
+    box-shadow: 0 0 0 3px rgba(30,111,181,0.15);
+    transform: scale(1.01);
+  }
+  .mv-order-item.highlight {
+    background: #eff6ff; border-color: var(--blue);
+    box-shadow: 0 2px 8px rgba(30,111,181,0.15);
+  }
+  .mv-drag-handle {
+    color: var(--gray-400); font-size: 18px; cursor: grab; flex-shrink: 0;
+    line-height: 1; padding: 0 4px; touch-action: none;
+    user-select: none; -webkit-user-select: none;
+  }
+  .mv-drag-handle:active { cursor: grabbing; color: var(--blue); }
+  .mv-item-pos {
+    font-size: 10px; color: var(--gray-400); font-weight: 700;
+    min-width: 18px; text-align: center; flex-shrink: 0;
+  }
+  .mv-item-num {
+    font-family: monospace; font-size: 10px;
+    color: var(--blue); font-weight: 700; white-space: nowrap; flex-shrink: 0;
+  }
+  .mv-item-desc {
+    flex: 1; color: var(--gray-600); font-size: 11px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .mv-order-btns { display: flex; gap: 3px; flex-shrink: 0; }
+  .mv-order-btn {
+    background: var(--gray-50); border: 1px solid var(--gray-200);
+    border-radius: 5px; width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 11px; color: var(--gray-500);
+    transition: all 0.12s;
+  }
+  .mv-order-btn:hover:not(:disabled) { background: var(--navy); color: white; border-color: var(--navy); }
+  .mv-order-btn:disabled { opacity: 0.2; cursor: default; }
+  .mv-save-order {
+    width: 100%; margin-top: 12px; background: var(--blue); border: none;
+    border-radius: 8px; padding: 10px; color: white;
+    font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .mv-save-order:hover { background: var(--navy); }
   .mv-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 18px; border-top: 1px solid var(--gray-200); }
   .mv-btn-cancel {
     background: var(--gray-100); border: 1px solid var(--gray-200);
@@ -946,14 +1019,18 @@
       <label>Setor Atual</label>
       <select id="fSetor">
         <option value="">Todos os setores</option>
-        <option value="GAB">GAB</option>
-        <option value="DADM">DADM</option>
-        <option value="GOBRE">GOBRE</option>
-        <option value="GLC">GLC</option>
-        <option value="CCON">CCON</option>
         <option value="CC">CC</option>
+        <option value="CCON">CCON</option>
+        <option value="DADM">DADM</option>
         <option value="DFIN/CGFR">DFIN/CGFR</option>
+        <option value="DFIN/CGFR/AUTORIZAÇÃO">DFIN/CGFR/AUTORIZAÇÃO</option>
+        <option value="DFIN/CGFR/NR-ARO">DFIN/CGFR/NR-ARO</option>
         <option value="DFIN/EMPENHO">DFIN/EMPENHO</option>
+        <option value="DFIN/LIBERAÇÃO">DFIN/LIBERAÇÃO</option>
+        <option value="GAB">GAB</option>
+        <option value="GLC">GLC</option>
+        <option value="GOBRE">GOBRE</option>
+        <option value="SUSP">SUSP</option>
       </select>
     </div>
     <div class="filter-group">
@@ -1035,14 +1112,17 @@
           <label>Setor Atual</label>
           <select id="relFSetor">
             <option value="">Todos os setores</option>
-            <option value="GAB">GAB</option>
-            <option value="DADM">DADM</option>
-            <option value="GOBRE">GOBRE</option>
-            <option value="GLC">GLC</option>
-            <option value="CCON">CCON</option>
             <option value="CC">CC</option>
+            <option value="CCON">CCON</option>
+            <option value="DADM">DADM</option>
             <option value="DFIN/CGFR">DFIN/CGFR</option>
+            <option value="DFIN/CGFR/AUTORIZAÇÃO">DFIN/CGFR/AUTORIZAÇÃO</option>
+            <option value="DFIN/CGFR/NR-ARO">DFIN/CGFR/NR-ARO</option>
             <option value="DFIN/EMPENHO">DFIN/EMPENHO</option>
+            <option value="DFIN/LIBERAÇÃO">DFIN/LIBERAÇÃO</option>
+            <option value="GAB">GAB</option>
+            <option value="GLC">GLC</option>
+            <option value="GOBRE">GOBRE</option>
             <option value="SUSP">SUSP</option>
           </select>
         </div>
@@ -1199,21 +1279,44 @@
 <div class="mv-overlay" id="mvOverlay">
   <div class="mv-modal">
     <div class="mv-header">
-      <h3>↕ Mover Processo</h3>
+      <h3>↕ Reordenar / Mover Processo</h3>
       <button style="background:none;border:none;color:white;font-size:20px;cursor:pointer;opacity:.7" onclick="W._cmv()">×</button>
     </div>
-    <div class="mv-body">
-      <div class="mv-info">
+
+    <!-- Info do processo -->
+    <div style="padding:12px 18px;background:#f8fafc;border-bottom:1px solid #e2e8f0">
+      <div class="mv-info" style="margin:0">
         <strong id="mvNum">—</strong>
-        <span id="mvDesc">—</span>
+        <span id="mvDesc" style="font-size:11px;color:#64748b">—</span>
       </div>
-      <label>Mover para o grupo:</label>
-      <select id="mvSel"></select>
     </div>
-    <div class="mv-footer">
-      <button class="mv-btn-cancel" onclick="W._cmv()">Cancelar</button>
-      <button class="mv-btn-confirm" onclick="W._confirmMv()">↕ Mover</button>
+
+    <!-- Abas -->
+    <div class="mv-tabs">
+      <div class="mv-tab active" id="mvTab1" onclick="W._mvTab(1)">↕ Reordenar no grupo</div>
+      <div class="mv-tab" id="mvTab2" onclick="W._mvTab(2)">📂 Mover para outro grupo</div>
     </div>
+
+    <!-- Aba 1: Reordenar -->
+    <div class="mv-tab-body active" id="mvBody1">
+      <p style="font-size:11px;color:#64748b;margin-bottom:10px">
+        ☰ <strong>Arraste</strong> os itens para reordenar, ou use os botões ▲▼. O processo destacado é o selecionado.
+      </p>
+      <div class="mv-order-list" id="mvOrderList"></div>
+      <button class="mv-save-order" onclick="W._saveOrder()">✔ Salvar nova ordem</button>
+    </div>
+
+    <!-- Aba 2: Mover para grupo -->
+    <div class="mv-tab-body" id="mvBody2">
+      <p style="font-size:11px;color:#64748b;margin-bottom:12px">Selecione o grupo de destino.</p>
+      <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:6px">Grupo de destino</label>
+      <select id="mvSel" style="width:100%;border:1px solid #cbd5e1;border-radius:7px;padding:9px 10px;font-size:13px;font-family:inherit;outline:none"></select>
+      <div class="mv-footer" style="padding:14px 0 0;border:none">
+        <button class="mv-btn-cancel" onclick="W._cmv()">Cancelar</button>
+        <button class="mv-btn-confirm" onclick="W._confirmMv()">📂 Mover para grupo</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1257,7 +1360,7 @@ const COL  = collection(db, 'processos'); // cada processo = 1 documento
 // ════════════════════════════════════════════════════════
 // DADOS BASE
 // ════════════════════════════════════════════════════════
-const SETORES = ['GAB','DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO'];
+const SETORES = ['CC','CCON','DADM','DFIN/CGFR','DFIN/CGFR/AUTORIZAÇÃO','DFIN/CGFR/NR-ARO','DFIN/EMPENHO','DFIN/LIBERAÇÃO','GAB','GLC','GOBRE','SUSP'];
 const TIPOS_PROCESSO = ['ADITIVO DE VALOR','ADITIVO DE VIGÊNCIA','EXECUÇÃO','MEDIÇÃO','PRINCIPAL'];
 const TIPOS_DEMANDA  = ['ATA','CESSÃO','DISPENSA','LICITAÇÃO','OUTRO'];
 const TIPOS          = [...TIPOS_PROCESSO, ...TIPOS_DEMANDA];
@@ -1414,6 +1517,15 @@ const unsub = onSnapshot(COL, (snapshot) => {
 });
 
 // ════════════════════════════════════════════════════════
+// AUTO-REFRESH — chama render() 800ms após qualquer ação
+// ════════════════════════════════════════════════════════
+let refreshTimer = null;
+function autoRefresh() {
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => render(), 800);
+}
+
+// ════════════════════════════════════════════════════════
 // SAVE — salva UM processo no Firestore imediatamente (sem debounce)
 // ════════════════════════════════════════════════════════
 async function save(pid) {
@@ -1423,6 +1535,7 @@ async function save(pid) {
     await setDoc(doc(COL, pid), DB[pid]);
     setStatus('✓ ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}), false);
     flashSaved();
+    autoRefresh();
   } catch(e) {
     console.error('save error:', e.code, e.message);
     setStatus('⚠️ Erro: ' + e.code, true);
@@ -1812,6 +1925,7 @@ window.confirmDelete = () => {
   const row=document.querySelector(`tr[data-pid="${pendingDeleteId}"]`);
   if(row){row.style.opacity='0';row.style.transform='translateX(30px)';row.style.transition='all .25s';setTimeout(()=>row.remove(),260);}
   pendingDeleteId=null;
+  autoRefresh();
 };
 document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
@@ -1905,6 +2019,7 @@ W._salvarNovo = async () => {
   await save(newId);
   W._closeNovo();
   render();
+  autoRefresh();
 };
 
 document.getElementById('npOverlay').addEventListener('click', e => {
@@ -1935,7 +2050,10 @@ W._sgrt = async (gid) => {
     span.textContent = nome;
     grpNames[gid] = nome;
     if (fbReady) {
-      try { await setDoc(doc(COL, '__grpnames'), grpNames); }
+      try {
+        await setDoc(doc(COL, '__grpnames'), grpNames);
+        autoRefresh();
+      }
       catch(e) { console.warn('grpnames:', e.code); }
     }
   }
@@ -1958,25 +2076,181 @@ let mvPid = null;
 
 W._omv = (pid) => {
   mvPid = pid;
-  const p    = GRUPOS.flatMap(g => g.processos).find(x => x.id === pid);
+  const p      = GRUPOS.flatMap(g => g.processos).find(x => x.id === pid);
   const gAtual = GRUPOS.find(g => g.processos.some(x => x.id === pid));
   if (!p || !gAtual) return;
 
   document.getElementById('mvNum').textContent  = p.num;
-  document.getElementById('mvDesc').textContent = DB[pid]?.desc || p.desc;
+  document.getElementById('mvDesc').textContent = (DB[pid]?.desc || p.desc || '').substring(0,60);
 
+  // Aba 1 — reordenar com drag & drop
+  W._buildOrderList(gAtual, pid);
+
+  // Aba 2 — mover para outro grupo
   const sel = document.getElementById('mvSel');
   sel.innerHTML = GRUPOS
     .filter(g => g.id !== gAtual.id)
     .map(g => `<option value="${g.id}">${g.icone} ${g.tema}</option>`)
     .join('');
 
+  W._mvTab(1);
   document.getElementById('mvOverlay').classList.add('active');
 };
+
+W._mvTab = (n) => {
+  document.getElementById('mvTab1').classList.toggle('active', n===1);
+  document.getElementById('mvTab2').classList.toggle('active', n===2);
+  document.getElementById('mvBody1').classList.toggle('active', n===1);
+  document.getElementById('mvBody2').classList.toggle('active', n===2);
+};
+
+let mvGid = null;      // grupo atual do processo em foco
+let dragSrcIdx = null; // índice sendo arrastado
+
+W._buildOrderList = (g, activePid) => {
+  mvGid = g.id;
+  const list = document.getElementById('mvOrderList');
+  list.innerHTML = g.processos.map((p, idx) => {
+    const desc = (DB[p.id]?.desc || p.desc || '').substring(0, 52);
+    const isActive = p.id === activePid;
+    return `<div class="mv-order-item${isActive?' highlight':''}"
+      draggable="true"
+      data-idx="${idx}"
+      data-pid="${p.id}"
+      ondragstart="W._dstart(event,${idx})"
+      ondragover="W._dover(event)"
+      ondragenter="W._denter(event)"
+      ondragleave="W._dleave(event)"
+      ondrop="W._ddrop(event,${idx})"
+      ondragend="W._dend(event)">
+      <span class="mv-drag-handle">☰</span>
+      <span class="mv-item-pos">${idx+1}</span>
+      <span class="mv-item-num">${p.num}</span>
+      <span class="mv-item-desc" title="${desc}">${desc}</span>
+      <div class="mv-order-btns">
+        <button class="mv-order-btn" title="Subir" onclick="W._reorder(${idx},-1)"
+          ${idx===0?'disabled':''}>▲</button>
+        <button class="mv-order-btn" title="Descer" onclick="W._reorder(${idx},1)"
+          ${idx===g.processos.length-1?'disabled':''}>▼</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Touch support
+  W._initTouch(list, g, activePid);
+};
+
+// ── Drag events (desktop) ──
+W._dstart = (e, idx) => {
+  dragSrcIdx = idx;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+};
+W._dover  = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
+W._denter = (e) => { e.currentTarget.classList.add('drag-over'); };
+W._dleave = (e) => { e.currentTarget.classList.remove('drag-over'); };
+W._dend   = (e) => {
+  document.querySelectorAll('.mv-order-item').forEach(el => {
+    el.classList.remove('dragging','drag-over');
+  });
+};
+W._ddrop  = (e, toIdx) => {
+  e.preventDefault();
+  if (dragSrcIdx === null || dragSrcIdx === toIdx) return;
+  const g = GRUPOS.find(x => x.id === mvGid);
+  if (!g) return;
+  const [moved] = g.processos.splice(dragSrcIdx, 1);
+  g.processos.splice(toIdx, 0, moved);
+  dragSrcIdx = null;
+  W._buildOrderList(g, mvPid);
+  autoRefresh();
+};
+
+// ── Buttons ▲▼ ──
+W._reorder = (idx, dir) => {
+  const g = GRUPOS.find(x => x.id === mvGid);
+  if (!g) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= g.processos.length) return;
+  [g.processos[idx], g.processos[newIdx]] = [g.processos[newIdx], g.processos[idx]];
+  W._buildOrderList(g, mvPid);
+  autoRefresh();
+  // Scroll to keep item visible
+  setTimeout(() => {
+    const items = document.querySelectorAll('.mv-order-item');
+    if (items[newIdx]) items[newIdx].scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }, 50);
+};
+
+// ── Touch drag (mobile) ──
+W._initTouch = (list, g, activePid) => {
+  let touchDragIdx = null;
+  let placeholder  = null;
+  let startY = 0;
+
+  list.querySelectorAll('.mv-order-item').forEach((el, idx) => {
+    el.addEventListener('touchstart', e => {
+      touchDragIdx = idx;
+      startY = e.touches[0].clientY;
+      el.classList.add('dragging');
+      e.preventDefault();
+    }, { passive: false });
+
+    el.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const y = e.touches[0].clientY;
+      const items = [...list.querySelectorAll('.mv-order-item:not(.dragging)')];
+      items.forEach(i => i.classList.remove('drag-over'));
+      const target = items.find(i => {
+        const r = i.getBoundingClientRect();
+        return y >= r.top && y <= r.bottom;
+      });
+      if (target) target.classList.add('drag-over');
+    }, { passive: false });
+
+    el.addEventListener('touchend', e => {
+      el.classList.remove('dragging');
+      const items = [...list.querySelectorAll('.mv-order-item')];
+      const overEl = list.querySelector('.drag-over');
+      if (overEl) {
+        const toIdx = items.indexOf(overEl);
+        overEl.classList.remove('drag-over');
+        if (toIdx !== -1 && toIdx !== touchDragIdx) {
+          const [moved] = g.processos.splice(touchDragIdx, 1);
+          g.processos.splice(toIdx, 0, moved);
+          W._buildOrderList(g, mvPid);
+          autoRefresh();
+        }
+      }
+      touchDragIdx = null;
+    });
+  });
+};
+
+// ── Save order button ──
+W._saveOrder = () => {
+  const g = GRUPOS.find(x => x.id === mvGid);
+  if (!g) return;
+  if (fbReady) {
+    const pos = {};
+    GRUPOS.forEach(gr => { pos[gr.id] = gr.processos.map(p => p.id); });
+    setDoc(doc(COL, '__positions'), pos)
+      .then(() => {
+        setStatus('✓ Ordem salva', false);
+        flashSaved();
+        autoRefresh();
+      })
+      .catch(e => console.warn('positions:', e.code));
+  }
+  W._cmv();
+  render();
+};
+
 W._cmv = () => {
   mvPid = null;
   document.getElementById('mvOverlay').classList.remove('active');
 };
+
 W._confirmMv = () => {
   if (!mvPid) return;
   const novoGid = document.getElementById('mvSel').value;
@@ -1989,7 +2263,6 @@ W._confirmMv = () => {
   const gNovo  = GRUPOS.find(g => g.id === novoGid);
   if (gNovo) gNovo.processos.push(proc);
 
-  // Salva posições no Firebase
   if (fbReady) {
     const pos = {};
     GRUPOS.forEach(g => { pos[g.id] = g.processos.map(p => p.id); });
@@ -1998,7 +2271,9 @@ W._confirmMv = () => {
 
   W._cmv();
   render();
+  autoRefresh();
 };
+
 document.getElementById('mvOverlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) W._cmv();
 });
