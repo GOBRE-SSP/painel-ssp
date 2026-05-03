@@ -287,7 +287,79 @@
   .group-header:hover { background: var(--navy2); }
   .group-header-left { display: flex; align-items: center; gap: 10px; }
   .group-icon { font-size: 16px; }
-  .group-title { font-size: 13px; font-weight: 700; }
+  .group-title { font-size: 13px; font-weight: 700; cursor: text; }
+  .group-title.hidden { display: none; }
+  .group-title-input {
+    font-size: 13px; font-weight: 700; font-family: inherit;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 5px; color: white;
+    padding: 2px 8px; outline: none; min-width: 180px; display: none;
+  }
+  .group-title-input.active { display: inline-block; }
+  .btn-edit-grp {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 4px; color: rgba(255,255,255,0.6);
+    font-size: 10px; cursor: pointer; padding: 2px 6px;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-edit-grp:hover { background: rgba(255,255,255,0.25); color: white; }
+
+  /* Move button */
+  .col-move { width: 38px; text-align: center; }
+  .btn-move {
+    background: none; border: 1.5px solid var(--gray-300);
+    border-radius: 5px; width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--gray-400); font-size: 13px;
+    transition: all 0.15s; margin: 0 auto;
+  }
+  .btn-move:hover { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+
+  /* Move modal */
+  .mv-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 500; display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .mv-overlay.active { opacity: 1; pointer-events: all; }
+  .mv-modal {
+    background: white; border-radius: 12px;
+    width: 90%; max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    transform: translateY(16px); transition: transform 0.2s; overflow: hidden;
+  }
+  .mv-overlay.active .mv-modal { transform: translateY(0); }
+  .mv-header {
+    background: var(--navy); color: white;
+    padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .mv-header h3 { font-size: 14px; font-weight: 700; }
+  .mv-body { padding: 20px; }
+  .mv-info {
+    background: var(--gray-50); border: 1px solid var(--gray-200);
+    border-radius: 7px; padding: 10px 14px; margin-bottom: 16px;
+    font-size: 12px; color: var(--gray-700);
+  }
+  .mv-info strong { display: block; font-family: monospace; font-size: 11px; color: var(--blue); margin-bottom: 3px; }
+  .mv-body label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; display: block; margin-bottom: 6px; }
+  .mv-body select {
+    width: 100%; border: 1px solid var(--gray-300); border-radius: 7px;
+    padding: 9px 10px; font-size: 13px; font-family: inherit; outline: none;
+  }
+  .mv-body select:focus { border-color: var(--blue); }
+  .mv-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 18px; border-top: 1px solid var(--gray-200); }
+  .mv-btn-cancel {
+    background: var(--gray-100); border: 1px solid var(--gray-200);
+    border-radius: 7px; padding: 8px 18px; font-size: 13px; font-weight: 600;
+    color: var(--gray-600); cursor: pointer; font-family: inherit;
+  }
+  .mv-btn-confirm {
+    background: var(--blue); border: none; border-radius: 7px;
+    padding: 8px 20px; font-size: 13px; font-weight: 700;
+    color: white; cursor: pointer; font-family: inherit; transition: background 0.15s;
+  }
+  .mv-btn-confirm:hover { background: var(--navy); }
   .group-count {
     background: rgba(255,255,255,0.2);
     border-radius: 10px;
@@ -766,12 +838,7 @@
       <label>🔍 Buscar</label>
       <input type="text" id="fBusca" placeholder="Número ou objeto...">
     </div>
-    <div class="filter-group">
-      <label>Tema</label>
-      <select id="fTema">
-        <option value="">Todos os temas</option>
-      </select>
-    </div>
+    <select id="fTema" style="display:none"><option value="">Todos os temas</option></select>
     <div class="filter-group">
       <label>Tipo</label>
       <select id="fTipo">
@@ -940,6 +1007,28 @@
   </div>
 </div>
 
+<!-- MODAL MOVER PROCESSO -->
+<div class="mv-overlay" id="mvOverlay">
+  <div class="mv-modal">
+    <div class="mv-header">
+      <h3>↕ Mover Processo</h3>
+      <button style="background:none;border:none;color:white;font-size:20px;cursor:pointer;opacity:.7" onclick="W._cmv()">×</button>
+    </div>
+    <div class="mv-body">
+      <div class="mv-info">
+        <strong id="mvNum">—</strong>
+        <span id="mvDesc">—</span>
+      </div>
+      <label>Mover para o grupo:</label>
+      <select id="mvSel"></select>
+    </div>
+    <div class="mv-footer">
+      <button class="mv-btn-cancel" onclick="W._cmv()">Cancelar</button>
+      <button class="mv-btn-confirm" onclick="W._confirmMv()">↕ Mover</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM DELETE MODAL -->
 <div class="modal-overlay" id="deleteModal">
   <div class="modal">
@@ -1078,32 +1167,51 @@ const unsub = onSnapshot(COL, (snapshot) => {
 
   snapshot.docChanges().forEach(change => {
     const pid = change.doc.id;
-    if (!DB[pid]) return; // processo não existe na base
     if (change.type === 'removed') return;
 
+    // Nomes de grupos
+    if (pid === '__grpnames') {
+      const names = change.doc.data();
+      Object.keys(names).forEach(gid => {
+        const g = GRUPOS.find(x => x.id === gid);
+        if (g && names[gid]) {
+          g.tema = names[gid];
+          const span = document.getElementById('gt_' + gid);
+          if (span) span.textContent = names[gid];
+          const inp  = document.getElementById('gti_' + gid);
+          if (inp)  inp.value = names[gid];
+        }
+      });
+      return;
+    }
+
+    // Posições dos processos
+    if (pid === '__positions') {
+      const pos = change.doc.data();
+      const allProcs = GRUPOS.flatMap(g => g.processos);
+      Object.keys(pos).forEach(gid => {
+        const g = GRUPOS.find(x => x.id === gid);
+        if (!g) return;
+        g.processos = pos[gid].map(id => allProcs.find(p => p.id === id)).filter(Boolean);
+      });
+      changed = true;
+      return;
+    }
+
+    if (!DB[pid]) return;
     const remote = change.doc.data();
     const local  = DB[pid];
-
-    // Atualiza só os campos que mudaram no servidor
     let fieldChanged = false;
     Object.keys(remote).forEach(k => {
-      if (local[k] !== remote[k]) {
-        local[k] = remote[k];
-        fieldChanged = true;
-      }
+      if (local[k] !== remote[k]) { local[k] = remote[k]; fieldChanged = true; }
     });
-
-    if (fieldChanged) {
-      changed = true;
-      // Atualiza só a linha afetada — NÃO re-renderiza tudo
-      updateRow(pid);
-    }
+    if (fieldChanged) { changed = true; updateRow(pid); }
   });
 
-  // Na primeira carga, renderiza tudo
   if (snapshot.metadata.hasPendingWrites === false && !document.getElementById('mainContent').children.length) {
     render();
   }
+  if (changed) render();
 
   setStatus('🟢 Online', false);
 }, (err) => {
@@ -1256,6 +1364,9 @@ function buildRow(p, isFirst) {
     <td class="col-emp check-col">
       <input type="checkbox" class="status-check" ${d.empenho?'checked':''} onchange="W._chk('${p.id}','empenho',this.checked)">
     </td>
+    <td class="col-move">
+      <button class="btn-move" title="Mover para outro grupo" onclick="W._omv('${p.id}')">↕</button>
+    </td>
     <td class="col-acao">
       <button class="btn-delete" onclick="W._del('${p.id}','${p.num}')">🗑</button>
     </td>
@@ -1281,7 +1392,13 @@ function render() {
       <div class="group-header ${open?'open':''}" onclick="W._grp('${g.id}',this)">
         <div class="group-header-left">
           <span class="group-icon">${g.icone}</span>
-          <span class="group-title">${g.tema}</span>
+          <div style="display:flex;align-items:center;gap:6px" onclick="event.stopPropagation()">
+            <span class="group-title" id="gt_${g.id}" ondblclick="W._egrt('${g.id}')">${g.tema}</span>
+            <input class="group-title-input" id="gti_${g.id}" value="${g.tema}"
+              onblur="W._sgrt('${g.id}')"
+              onkeydown="if(event.key==='Enter')W._sgrt('${g.id}');if(event.key==='Escape')W._cgrt('${g.id}')">
+            <button class="btn-edit-grp" onclick="W._egrt('${g.id}')" title="Renomear grupo">✎ Renomear</button>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="group-count">${ps.length} processo${ps.length!==1?'s':''}</span>
@@ -1301,6 +1418,7 @@ function render() {
             <th class="col-pend">Pendência ✎</th>
             <th class="col-contr">Contrato</th>
             <th class="col-emp">Empenho</th>
+            <th class="col-move">↕</th>
             <th class="col-acao">Ação</th>
           </tr></thead>
           <tbody id="tbody_${g.id}">
@@ -1508,6 +1626,98 @@ window.confirmDelete = () => {
   pendingDeleteId=null;
 };
 document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ════════════════════════════════════════════════════════
+// RENOMEAR GRUPO
+// ════════════════════════════════════════════════════════
+const grpNames = {};
+
+W._egrt = (gid) => {
+  const span = document.getElementById('gt_' + gid);
+  const inp  = document.getElementById('gti_' + gid);
+  if (!span || !inp) return;
+  span.classList.add('hidden');
+  inp.classList.add('active');
+  inp.focus(); inp.select();
+};
+W._sgrt = async (gid) => {
+  const span = document.getElementById('gt_' + gid);
+  const inp  = document.getElementById('gti_' + gid);
+  if (!span || !inp) return;
+  const nome = inp.value.trim();
+  if (nome) {
+    const g = GRUPOS.find(x => x.id === gid);
+    if (g) g.tema = nome;
+    span.textContent = nome;
+    grpNames[gid] = nome;
+    if (fbReady) {
+      try { await setDoc(doc(COL, '__grpnames'), grpNames); }
+      catch(e) { console.warn('grpnames:', e.code); }
+    }
+  }
+  inp.classList.remove('active');
+  span.classList.remove('hidden');
+};
+W._cgrt = (gid) => {
+  const span = document.getElementById('gt_' + gid);
+  const inp  = document.getElementById('gti_' + gid);
+  if (!span || !inp) return;
+  inp.value = span.textContent;
+  inp.classList.remove('active');
+  span.classList.remove('hidden');
+};
+
+// ════════════════════════════════════════════════════════
+// MOVER PROCESSO
+// ════════════════════════════════════════════════════════
+let mvPid = null;
+
+W._omv = (pid) => {
+  mvPid = pid;
+  const p    = GRUPOS.flatMap(g => g.processos).find(x => x.id === pid);
+  const gAtual = GRUPOS.find(g => g.processos.some(x => x.id === pid));
+  if (!p || !gAtual) return;
+
+  document.getElementById('mvNum').textContent  = p.num;
+  document.getElementById('mvDesc').textContent = DB[pid]?.desc || p.desc;
+
+  const sel = document.getElementById('mvSel');
+  sel.innerHTML = GRUPOS
+    .filter(g => g.id !== gAtual.id)
+    .map(g => `<option value="${g.id}">${g.icone} ${g.tema}</option>`)
+    .join('');
+
+  document.getElementById('mvOverlay').classList.add('active');
+};
+W._cmv = () => {
+  mvPid = null;
+  document.getElementById('mvOverlay').classList.remove('active');
+};
+W._confirmMv = () => {
+  if (!mvPid) return;
+  const novoGid = document.getElementById('mvSel').value;
+  if (!novoGid) return;
+
+  const gAtual = GRUPOS.find(g => g.processos.some(x => x.id === mvPid));
+  if (!gAtual) return;
+  const idx = gAtual.processos.findIndex(x => x.id === mvPid);
+  const [proc] = gAtual.processos.splice(idx, 1);
+  const gNovo  = GRUPOS.find(g => g.id === novoGid);
+  if (gNovo) gNovo.processos.push(proc);
+
+  // Salva posições no Firebase
+  if (fbReady) {
+    const pos = {};
+    GRUPOS.forEach(g => { pos[g.id] = g.processos.map(p => p.id); });
+    setDoc(doc(COL, '__positions'), pos).catch(e => console.warn('positions:', e.code));
+  }
+
+  W._cmv();
+  render();
+};
+document.getElementById('mvOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) W._cmv();
+});
 
 // ════════════════════════════════════════════════════════
 // RELATÓRIO E EXPORTAÇÃO
