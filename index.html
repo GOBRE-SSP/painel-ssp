@@ -600,7 +600,24 @@
     font-weight: 600;
     color: var(--blue);
     white-space: nowrap;
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: text;
   }
+
+  .num-wrap {
+    display: inline-flex; align-items: center; gap: 5px;
+    position: relative;
+  }
+  .btn-copy-num {
+    background: none; border: none; cursor: pointer;
+    color: var(--gray-300); font-size: 11px; padding: 1px 3px;
+    border-radius: 3px; line-height: 1; flex-shrink: 0;
+    transition: all 0.15s; opacity: 0;
+  }
+  .num-wrap:hover .btn-copy-num { opacity: 1; color: var(--blue); }
+  .btn-copy-num:hover { background: var(--blue-light); }
+  .btn-copy-num.copied { color: var(--green) !important; opacity: 1 !important; }
 
   /* Type badge */
   .type-badge {
@@ -1790,7 +1807,10 @@ function buildRow(p, isFirst) {
     <td class="col-num">
       <div class="level-indent">
         ${isFirst?'':'<span class="level-arrow">↳</span>'}
-        <span class="proc-num">${p.num}</span>
+        <span class="num-wrap">
+          <span class="proc-num" title="Clique e arraste para selecionar">${p.num}</span>
+          <button class="btn-copy-num" title="Copiar número" onclick="W._copyNum(this,'${p.num}')">⧉</button>
+        </span>
       </div>
     </td>
     <td class="col-desc editable-cell" id="d_td_${p.id}">
@@ -2094,6 +2114,24 @@ W._grp = (gid, h) => {
   const open = b.classList.toggle('visible');
   h.classList.toggle('open', open);
   groupOpen[gid] = open;
+};
+
+// COPIAR NÚMERO
+W._copyNum = (btn, num) => {
+  navigator.clipboard.writeText(num).then(() => {
+    btn.textContent = '✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('copied'); }, 1800);
+  }).catch(() => {
+    // Fallback para navegadores sem clipboard API
+    const el = document.createElement('textarea');
+    el.value = num; el.style.position = 'fixed'; el.style.opacity = '0';
+    document.body.appendChild(el); el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    btn.textContent = '✓'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('copied'); }, 1800);
+  });
 };
 
 // CHECKBOX
