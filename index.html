@@ -1460,6 +1460,27 @@ const unsub = onSnapshot(COL, (snapshot) => {
     const pid = change.doc.id;
     if (change.type === 'removed') return;
 
+    // Catálogo de processos (novos processos de outros dispositivos)
+    if (pid === '__catalog') {
+      const catalog = change.doc.data();
+      let catalogChanged = false;
+      Object.keys(catalog).forEach(procId => {
+        const meta = catalog[procId];
+        // Verifica se o processo já existe em algum grupo
+        const exists = GRUPOS.some(g => g.processos.some(p => p.id === procId));
+        if (!exists && meta.gid) {
+          const g = GRUPOS.find(x => x.id === meta.gid);
+          if (g) {
+            g.processos.push({ id: procId, num: meta.num, desc: meta.desc, tipo: meta.tipo });
+            if (!DB[procId]) DB[procId] = { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:meta.tipo||'', demanda:'', deleted:false };
+            catalogChanged = true;
+          }
+        }
+      });
+      if (catalogChanged) changed = true;
+      return;
+    }
+
     // Nomes de grupos
     if (pid === '__grpnames') {
       const names = change.doc.data();
@@ -1479,17 +1500,26 @@ const unsub = onSnapshot(COL, (snapshot) => {
     // Posições dos processos
     if (pid === '__positions') {
       const pos = change.doc.data();
+      // Collect all known processes across all groups + DB
       const allProcs = GRUPOS.flatMap(g => g.processos);
       Object.keys(pos).forEach(gid => {
         const g = GRUPOS.find(x => x.id === gid);
         if (!g) return;
-        g.processos = pos[gid].map(id => allProcs.find(p => p.id === id)).filter(Boolean);
+        g.processos = pos[gid].map(id => {
+          // Try existing proc first, then reconstruct from DB if possible
+          return allProcs.find(p => p.id === id) || (DB[id] ? { id, num: DB[id]._num||id, desc: DB[id].desc||'', tipo: DB[id].tipo||'' } : null);
+        }).filter(Boolean);
       });
       changed = true;
       return;
     }
 
-    if (!DB[pid]) return;
+    // ── Processo novo ou existente ──
+    if (!DB[pid]) {
+      // Processo novo vindo de outro dispositivo
+      // Verifica se existe nos metadados salvos
+      DB[pid] = {};
+    }
     const remote = change.doc.data();
     const local  = DB[pid];
     let fieldChanged = false;
@@ -2004,19 +2034,40 @@ W._salvarNovo = async () => {
   // Gera ID único
   const newId = 'px_' + Date.now();
 
-  // Adiciona ao grupo
+  // Adiciona ao grupo localmente
   const grupo = GRUPOS.find(g => g.id === gid);
   if (!grupo) return;
-  grupo.processos.push({ id: newId, tipo: tipo||'', num, desc });
+  const newProc = { id: newId, tipo: tipo||'', num, desc };
+  grupo.processos.push(newProc);
 
-  // Cria registro local e salva no Firebase
+  // Cria registro no DB local
   DB[newId] = {
+    _num: num,  // guardado para reconstrução via __positions
     setor, pendencia: pend, contrato: contr,
     empenho: emp, prioridade: prio,
     desc: '', tipo: tipo||'', demanda: demanda||'', deleted: false
   };
 
+  // Salva os dados do processo no Firestore
   await save(newId);
+
+  // Salva o catálogo de processos no Firestore (para outros dispositivos saberem da existência)
+  if (fbReady) {
+    try {
+      // __catalog: mapa de id -> { num, desc, tipo, gid } para reconstrução em outros dispositivos
+      const catalog = {};
+      GRUPOS.forEach(g => g.processos.forEach(p => {
+        catalog[p.id] = { num: p.num, desc: p.desc || '', tipo: p.tipo || '', gid: g.id };
+      }));
+      await setDoc(doc(COL, '__catalog'), catalog);
+
+      // Também salva posições para garantir ordem correta
+      const pos = {};
+      GRUPOS.forEach(g => { pos[g.id] = g.processos.map(p => p.id); });
+      await setDoc(doc(COL, '__positions'), pos);
+    } catch(e) { console.warn('catalog save:', e.code); }
+  }
+
   W._closeNovo();
   render();
   autoRefresh();
