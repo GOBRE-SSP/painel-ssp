@@ -145,6 +145,87 @@
   }
   .btn-relatorio:hover { background: #15803d; }
 
+  .btn-novo-proc {
+    background: var(--navy);
+    color: white; border: none;
+    border-radius: 6px; padding: 7px 14px;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    white-space: nowrap; transition: background 0.15s;
+  }
+  .btn-novo-proc:hover { background: #0a1f3a; }
+
+  /* ─── MODAL NOVO PROCESSO ─── */
+  .np-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 500; display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .np-overlay.active { opacity: 1; pointer-events: all; }
+  .np-modal {
+    background: white; border-radius: 12px;
+    width: 92%; max-width: 640px; max-height: 92vh; overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    transform: translateY(20px); transition: transform 0.2s;
+  }
+  .np-overlay.active .np-modal { transform: translateY(0); }
+  .np-header {
+    background: var(--navy); color: white;
+    padding: 16px 22px; border-radius: 12px 12px 0 0;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .np-header h3 { font-size: 15px; font-weight: 700; }
+  .np-close { background: none; border: none; color: white; font-size: 22px; cursor: pointer; opacity: .7; line-height: 1; }
+  .np-close:hover { opacity: 1; }
+  .np-body { padding: 22px; }
+  .np-section {
+    font-size: 11px; font-weight: 700; color: var(--navy);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    border-bottom: 2px solid var(--blue-light);
+    padding-bottom: 4px; margin-bottom: 14px; margin-top: 18px;
+  }
+  .np-section:first-child { margin-top: 0; }
+  .np-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .np-field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 150px; }
+  .np-field.full { flex: 100%; min-width: 100%; }
+  .np-field label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.4px; }
+  .np-field input, .np-field select, .np-field textarea {
+    border: 1px solid var(--gray-300); border-radius: 7px;
+    padding: 8px 10px; font-size: 13px; font-family: inherit;
+    color: var(--gray-900); background: var(--gray-50); outline: none;
+    transition: border 0.15s, box-shadow 0.15s;
+  }
+  .np-field input:focus, .np-field select:focus, .np-field textarea:focus {
+    border-color: var(--blue); background: white;
+    box-shadow: 0 0 0 3px rgba(30,111,181,0.1);
+  }
+  .np-field textarea { resize: vertical; min-height: 70px; }
+  .np-req { color: var(--red); }
+  .np-error {
+    background: var(--red-light); color: var(--red);
+    border-radius: 7px; padding: 9px 14px;
+    font-size: 12px; font-weight: 600; margin-bottom: 14px; display: none;
+  }
+  .np-footer {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 14px 22px; border-top: 1px solid var(--gray-200);
+    position: sticky; bottom: 0; background: white;
+  }
+  .np-btn-cancel {
+    background: var(--gray-100); border: 1px solid var(--gray-200);
+    border-radius: 8px; padding: 9px 20px;
+    font-size: 13px; font-weight: 600; color: var(--gray-600);
+    cursor: pointer; font-family: inherit;
+  }
+  .np-btn-cancel:hover { background: var(--gray-200); }
+  .np-btn-save {
+    background: var(--blue); border: none; border-radius: 8px;
+    padding: 9px 24px; font-size: 13px; font-weight: 700;
+    color: white; cursor: pointer; font-family: inherit; transition: background 0.15s;
+  }
+  .np-btn-save:hover { background: var(--navy); }
+
   .t-licitacao { background: #ede9fe; color: #5b21b6; }
 
   /* ─── MODAL RELATÓRIO ─── */
@@ -901,6 +982,7 @@
     </div>
     <button class="btn-clear" onclick="clearFilters()">✕ Limpar filtros</button>
     <button class="btn-relatorio" onclick="W._openRelatorio()">📊 Relatório / Exportar</button>
+    <button class="btn-novo-proc" onclick="W._openNovo()">＋ Novo Processo</button>
   </div>
   <div class="filters-info">
     <span>Exibindo <strong id="visibleCount">0</strong> de <strong id="totalCount">0</strong> processos</span>
@@ -1003,6 +1085,112 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO PROCESSO -->
+<div class="np-overlay" id="npOverlay">
+  <div class="np-modal">
+    <div class="np-header">
+      <h3>➕ Cadastrar Novo Processo</h3>
+      <button class="np-close" onclick="W._closeNovo()">×</button>
+    </div>
+    <div class="np-body">
+      <div class="np-error" id="npError"></div>
+
+      <div class="np-section">Identificação</div>
+      <div class="np-row">
+        <div class="np-field full">
+          <label>Nº do Processo <span class="np-req">*</span></label>
+          <input type="text" id="np_num" placeholder="Ex: 00027.001234/2026-01">
+        </div>
+      </div>
+      <div class="np-row">
+        <div class="np-field full">
+          <label>Objeto / Descrição <span class="np-req">*</span></label>
+          <textarea id="np_desc" placeholder="Descreva o objeto do processo..."></textarea>
+        </div>
+      </div>
+      <div class="np-row">
+        <div class="np-field">
+          <label>Grupo / Tema <span class="np-req">*</span></label>
+          <select id="np_grupo">
+            <option value="">— Selecione —</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Demanda</label>
+          <select id="np_demanda">
+            <option value="">— Selecione —</option>
+            <option>ATA</option>
+            <option>CESSÃO</option>
+            <option>DISPENSA</option>
+            <option>LICITAÇÃO</option>
+            <option>OUTRO</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Tipo</label>
+          <select id="np_tipo">
+            <option value="">— Selecione —</option>
+            <option>ADITIVO DE VALOR</option>
+            <option>ADITIVO DE VIGÊNCIA</option>
+            <option>EXECUÇÃO</option>
+            <option>MEDIÇÃO</option>
+            <option>PRINCIPAL</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="np-section">Situação Atual</div>
+      <div class="np-row">
+        <div class="np-field">
+          <label>Setor Atual</label>
+          <select id="np_setor">
+            <option value="">— Selecione —</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Contrato Assinado</label>
+          <select id="np_contrato">
+            <option value="false">Não</option>
+            <option value="true">Sim ✓</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Empenho</label>
+          <select id="np_empenho">
+            <option value="false">Não</option>
+            <option value="true">Sim ✓</option>
+          </select>
+        </div>
+      </div>
+      <div class="np-row">
+        <div class="np-field full">
+          <label>Pendência</label>
+          <textarea id="np_pend" rows="2" placeholder="Descreva a pendência atual, se houver..."></textarea>
+        </div>
+      </div>
+      <div class="np-row">
+        <div class="np-field">
+          <label>Prioridade</label>
+          <select id="np_prio">
+            <option value="false">Normal</option>
+            <option value="true">🔴 Prioritário</option>
+          </select>
+        </div>
+        <div class="np-field">
+          <label>Processo principal (vinculado a)</label>
+          <select id="np_pai">
+            <option value="">Nenhum — é processo principal</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="np-footer">
+      <button class="np-btn-cancel" onclick="W._closeNovo()">Cancelar</button>
+      <button class="np-btn-save" onclick="W._salvarNovo()">✔ Cadastrar Processo</button>
     </div>
   </div>
 </div>
@@ -1626,6 +1814,102 @@ window.confirmDelete = () => {
   pendingDeleteId=null;
 };
 document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ════════════════════════════════════════════════════════
+// NOVO PROCESSO
+// ════════════════════════════════════════════════════════
+W._openNovo = () => {
+  // Limpa campos
+  ['np_num','np_desc','np_pend'].forEach(id => document.getElementById(id).value = '');
+  ['np_grupo','np_demanda','np_tipo','np_setor','np_pai'].forEach(id => document.getElementById(id).selectedIndex = 0);
+  document.getElementById('np_contrato').value = 'false';
+  document.getElementById('np_empenho').value  = 'false';
+  document.getElementById('np_prio').value     = 'false';
+  document.getElementById('npError').style.display = 'none';
+
+  // Preenche grupos
+  const grpSel = document.getElementById('np_grupo');
+  grpSel.innerHTML = '<option value="">— Selecione —</option>';
+  GRUPOS.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.id; o.textContent = g.icone + ' ' + g.tema;
+    grpSel.appendChild(o);
+  });
+
+  // Preenche setores
+  const setorSel = document.getElementById('np_setor');
+  setorSel.innerHTML = '<option value="">— Selecione —</option>';
+  SETORES.forEach(s => {
+    const o = document.createElement('option'); o.value = s; o.textContent = s;
+    setorSel.appendChild(o);
+  });
+
+  // Preenche processos pai
+  const paiSel = document.getElementById('np_pai');
+  paiSel.innerHTML = '<option value="">Nenhum — é processo principal</option>';
+  GRUPOS.forEach(g => g.processos.forEach(p => {
+    if (DB[p.id]?.deleted) return;
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.num + ' — ' + (DB[p.id]?.desc || p.desc).substring(0, 55);
+    paiSel.appendChild(o);
+  }));
+
+  document.getElementById('npOverlay').classList.add('active');
+  setTimeout(() => document.getElementById('np_num').focus(), 150);
+};
+
+W._closeNovo = () => {
+  document.getElementById('npOverlay').classList.remove('active');
+};
+
+W._salvarNovo = async () => {
+  const num     = document.getElementById('np_num').value.trim();
+  const desc    = document.getElementById('np_desc').value.trim();
+  const gid     = document.getElementById('np_grupo').value;
+  const demanda = document.getElementById('np_demanda').value;
+  const tipo    = document.getElementById('np_tipo').value;
+  const setor   = document.getElementById('np_setor').value;
+  const pend    = document.getElementById('np_pend').value.trim();
+  const contr   = document.getElementById('np_contrato').value === 'true';
+  const emp     = document.getElementById('np_empenho').value  === 'true';
+  const prio    = document.getElementById('np_prio').value     === 'true';
+
+  const errEl = document.getElementById('npError');
+
+  if (!num)  { errEl.textContent = '⚠️ Informe o Nº do Processo.';     errEl.style.display='block'; return; }
+  if (!desc) { errEl.textContent = '⚠️ Informe o Objeto / Descrição.'; errEl.style.display='block'; return; }
+  if (!gid)  { errEl.textContent = '⚠️ Selecione o Grupo / Tema.';     errEl.style.display='block'; return; }
+
+  // Verifica duplicidade
+  const existe = GRUPOS.flatMap(g => g.processos).some(p => p.num === num);
+  if (existe) { errEl.textContent = '⚠️ Já existe um processo com esse número.'; errEl.style.display='block'; return; }
+
+  errEl.style.display = 'none';
+
+  // Gera ID único
+  const newId = 'px_' + Date.now();
+
+  // Adiciona ao grupo
+  const grupo = GRUPOS.find(g => g.id === gid);
+  if (!grupo) return;
+  grupo.processos.push({ id: newId, tipo: tipo||'', num, desc });
+
+  // Cria registro local e salva no Firebase
+  DB[newId] = {
+    setor, pendencia: pend, contrato: contr,
+    empenho: emp, prioridade: prio,
+    desc: '', tipo: tipo||'', demanda: demanda||'', deleted: false
+  };
+
+  await save(newId);
+  W._closeNovo();
+  render();
+};
+
+document.getElementById('npOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) W._closeNovo();
+});
 
 // ════════════════════════════════════════════════════════
 // RENOMEAR GRUPO
