@@ -135,113 +135,115 @@
   }
   .btn-clear:hover { background: var(--gray-100); color: var(--gray-700); }
 
-  .btn-novo-proc {
-    background: var(--blue);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 7px 14px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    white-space: nowrap;
-    transition: background 0.15s;
+  .btn-relatorio {
+    background: var(--green);
+    color: white; border: none;
+    border-radius: 6px; padding: 7px 14px;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    white-space: nowrap; transition: background 0.15s;
   }
-  .btn-novo-proc:hover { background: var(--navy2); }
+  .btn-relatorio:hover { background: #15803d; }
 
-  /* ─── MODAL NOVO PROCESSO ─── */
-  .np-overlay {
+  .t-licitacao { background: #ede9fe; color: #5b21b6; }
+
+  /* ─── MODAL RELATÓRIO ─── */
+  .rel-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 400;
+    background: rgba(0,0,0,0.55);
+    z-index: 500;
     display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
   }
-  .np-overlay.active { opacity: 1; pointer-events: all; }
-  .np-modal {
-    background: white;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 620px;
-    max-height: 90vh;
+  .rel-overlay.active { opacity: 1; pointer-events: all; }
+  .rel-modal {
+    background: white; border-radius: 12px;
+    width: 92%; max-width: 700px; max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    transform: translateY(20px);
-    transition: transform 0.2s;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    transform: translateY(20px); transition: transform 0.2s;
   }
-  .np-overlay.active .np-modal { transform: translateY(0); }
-  .np-header {
-    background: var(--navy);
-    color: white;
-    padding: 16px 20px;
-    border-radius: 12px 12px 0 0;
+  .rel-overlay.active .rel-modal { transform: translateY(0); }
+  .rel-header {
+    background: var(--navy); color: white;
+    padding: 16px 22px; border-radius: 12px 12px 0 0;
     display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
   }
-  .np-header h3 { font-size: 15px; font-weight: 700; }
-  .np-close {
+  .rel-header h3 { font-size: 15px; font-weight: 700; }
+  .rel-close {
     background: none; border: none; color: white;
-    font-size: 20px; cursor: pointer; line-height: 1;
-    opacity: 0.7; padding: 0 4px;
+    font-size: 22px; cursor: pointer; opacity: 0.7; line-height: 1;
   }
-  .np-close:hover { opacity: 1; }
-  .np-body { padding: 20px; }
-  .np-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
-  .np-field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 150px; }
-  .np-field label {
-    font-size: 11px; font-weight: 700; color: var(--gray-500);
-    text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .np-field input, .np-field select, .np-field textarea {
-    border: 1px solid var(--gray-300);
-    border-radius: 7px;
-    padding: 8px 10px;
-    font-size: 13px;
-    font-family: inherit;
-    color: var(--gray-900);
-    background: var(--gray-50);
-    outline: none;
-    transition: border 0.15s;
-  }
-  .np-field input:focus, .np-field select:focus, .np-field textarea:focus {
-    border-color: var(--blue);
-    background: white;
-    box-shadow: 0 0 0 3px rgba(30,111,181,0.1);
-  }
-  .np-field textarea { resize: vertical; min-height: 72px; }
-  .np-field.full { flex: 100%; min-width: 100%; }
-  .np-section {
+  .rel-close:hover { opacity: 1; }
+  .rel-body { padding: 22px; }
+  .rel-section-title {
     font-size: 11px; font-weight: 700; color: var(--navy);
     text-transform: uppercase; letter-spacing: 0.6px;
     border-bottom: 2px solid var(--blue-light);
-    padding-bottom: 4px; margin-bottom: 12px; margin-top: 4px;
+    padding-bottom: 4px; margin-bottom: 14px; margin-top: 6px;
   }
-  .np-footer {
-    display: flex; gap: 10px; justify-content: flex-end;
-    padding: 14px 20px;
-    border-top: 1px solid var(--gray-200);
+  .rel-cards {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px; margin-bottom: 20px;
   }
-  .np-btn-cancel {
-    background: var(--gray-100); border: 1px solid var(--gray-200);
-    border-radius: 8px; padding: 9px 20px;
-    font-size: 13px; font-weight: 600; color: var(--gray-600);
-    cursor: pointer; font-family: inherit;
+  .rel-card {
+    background: var(--gray-50); border: 1px solid var(--gray-200);
+    border-radius: 8px; padding: 12px 14px; text-align: center;
   }
-  .np-btn-cancel:hover { background: var(--gray-200); }
-  .np-btn-save {
-    background: var(--blue); border: none;
-    border-radius: 8px; padding: 9px 24px;
-    font-size: 13px; font-weight: 700; color: white;
-    cursor: pointer; font-family: inherit;
-    transition: background 0.15s;
+  .rel-card .num { font-size: 24px; font-weight: 800; color: var(--navy); display: block; }
+  .rel-card .lbl { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+  .rel-card.green .num { color: var(--green); }
+  .rel-card.red .num   { color: var(--red); }
+  .rel-card.blue .num  { color: var(--blue); }
+
+  .rel-filters {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-end;
   }
-  .np-btn-save:hover { background: var(--navy); }
-  .np-error {
-    color: var(--red); font-size: 12px; font-weight: 600;
-    padding: 8px 12px; background: var(--red-light);
-    border-radius: 6px; margin-bottom: 12px; display: none;
+  .rel-field { display: flex; flex-direction: column; gap: 4px; }
+  .rel-field label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; }
+  .rel-field select {
+    border: 1px solid var(--gray-300); border-radius: 6px;
+    padding: 7px 10px; font-size: 12px; font-family: inherit;
+    color: var(--gray-700); background: var(--gray-50); outline: none;
+    min-width: 150px;
   }
+  .rel-field select:focus { border-color: var(--blue); }
+
+  .rel-export-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .rel-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 10px 18px; border-radius: 8px; border: none;
+    font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .rel-btn.excel { background: #16a34a; color: white; }
+  .rel-btn.excel:hover { background: #15803d; }
+  .rel-btn.word  { background: #1e6fb5; color: white; }
+  .rel-btn.word:hover  { background: #1558a0; }
+  .rel-btn.print { background: var(--gray-700); color: white; }
+  .rel-btn.print:hover { background: var(--gray-900); }
+
+  .rel-preview {
+    margin-top: 18px; border: 1px solid var(--gray-200);
+    border-radius: 8px; overflow: hidden;
+  }
+  .rel-preview-header {
+    background: var(--gray-50); padding: 8px 14px;
+    font-size: 11px; font-weight: 700; color: var(--gray-500);
+    text-transform: uppercase; border-bottom: 1px solid var(--gray-200);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .rel-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .rel-table th {
+    background: var(--navy); color: white;
+    padding: 7px 10px; text-align: left; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap;
+  }
+  .rel-table td { padding: 6px 10px; border-bottom: 1px solid var(--gray-100); vertical-align: top; }
+  .rel-table tr:last-child td { border-bottom: none; }
+  .rel-table tr:hover td { background: #f0f6ff; }
+  .rel-count { font-size: 11px; color: var(--gray-500); }
 
   .filters-info {
     margin-top: 8px;
@@ -374,7 +376,6 @@
   .t-adesao    { background: #e0f2fe; color: #075985; }
   .t-cessao    { background: #fce7f3; color: #9d174d; }
   .t-medicao   { background: #fff7ed; color: #9a3412; }
-  .t-licitacao { background: #ede9fe; color: #5b21b6; }
   .t-locacao   { background: #ecfdf5; color: #065f46; }
   .t-outro     { background: var(--gray-100); color: var(--gray-500); }
 
@@ -587,90 +588,7 @@
   .btn-confirm-save:hover { background: #15803d; }
   .btn-confirm-save:active { opacity: 0.8; }
 
-  /* ─── GROUP TITLE EDITABLE ─── */
-  .group-title-wrap { display: flex; align-items: center; gap: 6px; }
-  .group-title { font-size: 13px; font-weight: 700; cursor: text; }
-  .group-title-input {
-    font-size: 13px; font-weight: 700; font-family: inherit;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.4);
-    border-radius: 5px; color: white;
-    padding: 2px 8px; outline: none;
-    min-width: 200px;
-    display: none;
-  }
-  .group-title-input.active { display: block; }
-  .group-title.hidden { display: none; }
-  .btn-edit-group {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 4px; color: rgba(255,255,255,0.6);
-    font-size: 10px; cursor: pointer; padding: 2px 6px;
-    transition: all 0.15s;
-  }
-  .btn-edit-group:hover { background: rgba(255,255,255,0.2); color: white; }
-
-  /* ─── MOVE PROCESS BUTTON ─── */
-  .btn-move {
-    background: none; border: 1.5px solid var(--gray-300);
-    border-radius: 5px; width: 26px; height: 26px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--gray-400); font-size: 12px;
-    transition: all 0.15s; margin: 0 auto;
-  }
-  .btn-move:hover { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
-
-  /* ─── MOVE MODAL ─── */
-  .mv-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 500;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity 0.2s;
-  }
-  .mv-overlay.active { opacity: 1; pointer-events: all; }
-  .mv-modal {
-    background: white; border-radius: 12px;
-    width: 90%; max-width: 440px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    transform: translateY(16px); transition: transform 0.2s;
-    overflow: hidden;
-  }
-  .mv-overlay.active .mv-modal { transform: translateY(0); }
-  .mv-header {
-    background: var(--navy); color: white;
-    padding: 14px 18px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .mv-header h3 { font-size: 14px; font-weight: 700; }
-  .mv-body { padding: 20px; }
-  .mv-body label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; display: block; margin-bottom: 6px; }
-  .mv-body select {
-    width: 100%; border: 1px solid var(--gray-300); border-radius: 7px;
-    padding: 9px 10px; font-size: 13px; font-family: inherit;
-    color: var(--gray-900); outline: none;
-  }
-  .mv-body select:focus { border-color: var(--blue); }
-  .mv-proc-info {
-    background: var(--gray-50); border-radius: 7px;
-    padding: 10px 12px; margin-bottom: 16px;
-    font-size: 12px; color: var(--gray-700);
-    border: 1px solid var(--gray-200);
-  }
-  .mv-proc-info strong { color: var(--blue); display: block; font-family: monospace; font-size: 11px; margin-bottom: 2px; }
-  .mv-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 18px; border-top: 1px solid var(--gray-200); }
-  .mv-btn-cancel {
-    background: var(--gray-100); border: 1px solid var(--gray-200);
-    border-radius: 7px; padding: 8px 18px;
-    font-size: 13px; font-weight: 600; color: var(--gray-600); cursor: pointer; font-family: inherit;
-  }
-  .mv-btn-confirm {
-    background: var(--blue); border: none;
-    border-radius: 7px; padding: 8px 20px;
-    font-size: 13px; font-weight: 700; color: white; cursor: pointer; font-family: inherit;
-  }
-  .mv-btn-confirm:hover { background: var(--navy); }
-  .col-move { width: 40px; text-align: center; }
+  /* ─── EMPTY STATE ─── */
   .empty-state {
     text-align: center;
     padding: 40px;
@@ -734,7 +652,8 @@
   }
 
   /* col widths */
-  .col-tipo   { width: 100px; }
+  .col-tipo   { width: 130px; }
+  .col-demanda{ width: 100px; }
   .col-num    { width: 170px; }
   .col-desc   { min-width: 200px; }
   .col-setor  { width: 120px; }
@@ -847,9 +766,12 @@
       <label>🔍 Buscar</label>
       <input type="text" id="fBusca" placeholder="Número ou objeto...">
     </div>
-    <select id="fTema" style="display:none">
-      <option value="">Todos os temas</option>
-    </select>
+    <div class="filter-group">
+      <label>Tema</label>
+      <select id="fTema">
+        <option value="">Todos os temas</option>
+      </select>
+    </div>
     <div class="filter-group">
       <label>Tipo</label>
       <select id="fTipo">
@@ -869,7 +791,6 @@
         <option value="CESSÃO">Cessão</option>
         <option value="DISPENSA">Dispensa</option>
         <option value="LICITAÇÃO">Licitação</option>
-        <option value="LOCAÇÃO">Locação</option>
         <option value="OUTRO">Outro</option>
       </select>
     </div>
@@ -885,7 +806,6 @@
         <option value="CC">CC</option>
         <option value="DFIN/CGFR">DFIN/CGFR</option>
         <option value="DFIN/EMPENHO">DFIN/EMPENHO</option>
-        <option value="SUSP">SUSP</option>
       </select>
     </div>
     <div class="filter-group">
@@ -913,7 +833,7 @@
       </select>
     </div>
     <button class="btn-clear" onclick="clearFilters()">✕ Limpar filtros</button>
-    <button class="btn-novo-proc" onclick="W._openNovo()">＋ Novo Processo</button>
+    <button class="btn-relatorio" onclick="W._openRelatorio()">📊 Relatório / Exportar</button>
   </div>
   <div class="filters-info">
     <span>Exibindo <strong id="visibleCount">0</strong> de <strong id="totalCount">0</strong> processos</span>
@@ -925,125 +845,97 @@
 <!-- MAIN -->
 <div class="main" id="mainContent"></div>
 
-<!-- MODAL NOVO PROCESSO -->
-<div class="np-overlay" id="npOverlay">
-  <div class="np-modal">
-    <div class="np-header">
-      <h3>➕ Cadastrar Novo Processo</h3>
-      <button class="np-close" onclick="W._closeNovo()">×</button>
+<!-- MODAL RELATÓRIO / EXPORTAÇÃO -->
+<div class="rel-overlay" id="relOverlay">
+  <div class="rel-modal">
+    <div class="rel-header">
+      <h3>📊 Relatório e Exportação</h3>
+      <button class="rel-close" onclick="W._closeRel()">×</button>
     </div>
-    <div class="np-body">
-      <div class="np-error" id="npError"></div>
+    <div class="rel-body">
 
-      <div class="np-section">Identificação</div>
-      <div class="np-row">
-        <div class="np-field full">
-          <label>Nº do Processo *</label>
-          <input type="text" id="np_num" placeholder="Ex: 00027.001234/2026-01">
-        </div>
-      </div>
-      <div class="np-row">
-        <div class="np-field full">
-          <label>Objeto / Descrição *</label>
-          <textarea id="np_desc" placeholder="Descreva o objeto do processo..."></textarea>
-        </div>
-      </div>
-      <div class="np-row">
-        <div class="np-field">
-          <label>Tipo *</label>
-          <select id="np_tipo">
-            <option value="">-- Selecione --</option>
-            <option>ADITIVO DE VALOR</option>
-            <option>ADITIVO DE VIGÊNCIA</option>
-            <option>ATA</option>
-            <option>CESSÃO</option>
-            <option>DISPENSA</option>
-            <option>EXECUÇÃO</option>
-            <option>LICITAÇÃO</option>
-            <option>LOCAÇÃO</option>
-            <option>MEDIÇÃO</option>
-            <option>OUTRO</option>
-            <option>PRINCIPAL</option>
+      <div class="rel-section-title">Resumo Geral</div>
+      <div class="rel-cards" id="relCards"></div>
+
+      <div class="rel-section-title">Filtrar para exportar</div>
+      <div class="rel-filters">
+        <div class="rel-field">
+          <label>Tipo</label>
+          <select id="relFTipo">
+            <option value="">Todos os tipos</option>
+            <option value="ADITIVO DE VALOR">Aditivo de Valor</option>
+            <option value="ADITIVO DE VIGÊNCIA">Aditivo de Vigência</option>
+            <option value="EXECUÇÃO">Execução</option>
+            <option value="MEDIÇÃO">Medição</option>
+            <option value="PRINCIPAL">Principal</option>
           </select>
         </div>
-        <div class="np-field">
-          <label>Tema / Grupo *</label>
-          <select id="np_grupo">
-            <option value="">-- Selecione --</option>
+        <div class="rel-field">
+          <label>Demanda</label>
+          <select id="relFDemanda">
+            <option value="">Todas as demandas</option>
+            <option value="ATA">Ata</option>
+            <option value="CESSÃO">Cessão</option>
+            <option value="DISPENSA">Dispensa</option>
+            <option value="LICITAÇÃO">Licitação</option>
+            <option value="LOCAÇÃO">Locação</option>
+            <option value="OUTRO">Outro</option>
           </select>
         </div>
-      </div>
-
-      <div class="np-section">Situação Atual</div>
-      <div class="np-row">
-        <div class="np-field">
+        <div class="rel-field">
           <label>Setor Atual</label>
-          <select id="np_setor">
-            <option value="">-- Selecione --</option>
+          <select id="relFSetor">
+            <option value="">Todos os setores</option>
+            <option value="GAB">GAB</option>
+            <option value="DADM">DADM</option>
+            <option value="GOBRE">GOBRE</option>
+            <option value="GLC">GLC</option>
+            <option value="CCON">CCON</option>
+            <option value="CC">CC</option>
+            <option value="DFIN/CGFR">DFIN/CGFR</option>
+            <option value="DFIN/EMPENHO">DFIN/EMPENHO</option>
+            <option value="SUSP">SUSP</option>
           </select>
         </div>
-        <div class="np-field">
-          <label>Contrato Assinado</label>
-          <select id="np_contrato">
-            <option value="false">Não</option>
-            <option value="true">Sim ✓</option>
-          </select>
-        </div>
-        <div class="np-field">
-          <label>Empenho</label>
-          <select id="np_empenho">
-            <option value="false">Não</option>
-            <option value="true">Sim ✓</option>
-          </select>
-        </div>
-      </div>
-      <div class="np-row">
-        <div class="np-field full">
-          <label>Pendência</label>
-          <textarea id="np_pend" placeholder="Descreva a pendência atual, se houver..." rows="2"></textarea>
-        </div>
-      </div>
-      <div class="np-row">
-        <div class="np-field">
-          <label>Prioridade</label>
-          <select id="np_prio">
-            <option value="false">Normal</option>
-            <option value="true">🔴 Prioritário</option>
-          </select>
-        </div>
-        <div class="np-field">
-          <label>Processo vinculado a</label>
-          <select id="np_pai">
-            <option value="">Nenhum (processo principal)</option>
+        <div class="rel-field">
+          <label>Contrato</label>
+          <select id="relFContrato">
+            <option value="">Todos</option>
+            <option value="sim">Assinado ✓</option>
+            <option value="nao">Não assinado</option>
           </select>
         </div>
       </div>
-    </div>
-    <div class="np-footer">
-      <button class="np-btn-cancel" onclick="W._closeNovo()">Cancelar</button>
-      <button class="np-btn-save" onclick="W._salvarNovo()">✔ Cadastrar Processo</button>
-    </div>
-  </div>
-</div>
 
-<!-- MODAL MOVER PROCESSO -->
-<div class="mv-overlay" id="mvOverlay">
-  <div class="mv-modal">
-    <div class="mv-header">
-      <h3>↕ Mover Processo para outro Grupo</h3>
-      <button class="np-close" onclick="W._closeMv()">×</button>
-    </div>
-    <div class="mv-body">
-      <div class="mv-proc-info">
-        <strong id="mvNum">—</strong>
-        <span id="mvDesc">—</span>
+      <div class="rel-export-btns">
+        <button class="rel-btn excel" onclick="W._exportExcel()">📗 Exportar Excel (.xlsx)</button>
+        <button class="rel-btn word"  onclick="W._exportWord()">📘 Exportar Word (.doc)</button>
+        <button class="rel-btn print" onclick="W._printRel()">🖨️ Imprimir / PDF</button>
       </div>
-      <label>Mover para o grupo:</label>
-      <select id="mvGrupoSel"></select>
-    </div>
-    <div class="mv-footer">
-      <button class="mv-btn-cancel" onclick="W._closeMv()">Cancelar</button>
-      <button class="mv-btn-confirm" onclick="W._confirmarMv()">↕ Mover</button>
+
+      <div class="rel-preview" id="relPreview">
+        <div class="rel-preview-header">
+          <span>Pré-visualização</span>
+          <span class="rel-count" id="relCount">0 processos</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="rel-table" id="relTable">
+            <thead><tr>
+              <th>#</th>
+              <th>Nº do Processo</th>
+              <th>Tipo</th>
+              <th>Objeto / Descrição</th>
+              <th>Setor Atual</th>
+              <th>Pendência</th>
+              <th>Contrato</th>
+              <th>Empenho</th>
+              <th>Grupo</th>
+            </tr></thead>
+            <tbody id="relTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1088,10 +980,10 @@ const COL  = collection(db, 'processos'); // cada processo = 1 documento
 // ════════════════════════════════════════════════════════
 // DADOS BASE
 // ════════════════════════════════════════════════════════
-const SETORES = ['GAB','DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO','SUSP'];
-const TIPOS_PROCESSO  = ['ADITIVO DE VALOR','ADITIVO DE VIGÊNCIA','EXECUÇÃO','MEDIÇÃO','PRINCIPAL'];
-const TIPOS_DEMANDA   = ['ATA','CESSÃO','DISPENSA','LICITAÇÃO','LOCAÇÃO','OUTRO'];
-const TIPOS           = [...TIPOS_PROCESSO, ...TIPOS_DEMANDA];
+const SETORES = ['GAB','DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO'];
+const TIPOS_PROCESSO = ['ADITIVO DE VALOR','ADITIVO DE VIGÊNCIA','EXECUÇÃO','MEDIÇÃO','PRINCIPAL'];
+const TIPOS_DEMANDA  = ['ATA','CESSÃO','DISPENSA','LICITAÇÃO','OUTRO'];
+const TIPOS          = [...TIPOS_PROCESSO, ...TIPOS_DEMANDA];
 
 const GRUPOS = [
   { id:'g1', icone:'🏗️', tema:'Manutenção Predial', processos:[
@@ -1169,7 +1061,7 @@ let pendingDeleteId = null;
 let fbReady = false;
 
 function emptyRec() {
-  return { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:'', deleted:false };
+  return { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:'', demanda:'', deleted:false };
 }
 GRUPOS.forEach(g => g.processos.forEach(p => { DB[p.id] = emptyRec(); }));
 
@@ -1186,44 +1078,13 @@ const unsub = onSnapshot(COL, (snapshot) => {
 
   snapshot.docChanges().forEach(change => {
     const pid = change.doc.id;
-    if (change.type === 'removed') return;
-
-    // Nomes personalizados de grupos
-    if (pid === '__grpnames') {
-      const names = change.doc.data();
-      Object.keys(names).forEach(gid => {
-        const g = GRUPOS.find(x => x.id === gid);
-        if (g && names[gid]) {
-          g.tema = names[gid];
-          const span = document.getElementById('gt_' + gid);
-          if (span) span.textContent = names[gid];
-          const inp  = document.getElementById('gti_' + gid);
-          if (inp)  inp.value = names[gid];
-        }
-      });
-      return;
-    }
-
-    // Posições dos processos (após mover)
-    if (pid === '__positions') {
-      const pos = change.doc.data();
-      Object.keys(pos).forEach(gid => {
-        const g = GRUPOS.find(x => x.id === gid);
-        if (!g) return;
-        const order = pos[gid];
-        const allProcs = GRUPOS.flatMap(gr => gr.processos);
-        g.processos = order.map(id => allProcs.find(p => p.id === id)).filter(Boolean);
-      });
-      changed = true;
-      return;
-    }
-
-    if (!DB[pid]) return;
+    if (!DB[pid]) return; // processo não existe na base
     if (change.type === 'removed') return;
 
     const remote = change.doc.data();
     const local  = DB[pid];
 
+    // Atualiza só os campos que mudaram no servidor
     let fieldChanged = false;
     Object.keys(remote).forEach(k => {
       if (local[k] !== remote[k]) {
@@ -1234,14 +1095,15 @@ const unsub = onSnapshot(COL, (snapshot) => {
 
     if (fieldChanged) {
       changed = true;
+      // Atualiza só a linha afetada — NÃO re-renderiza tudo
       updateRow(pid);
     }
   });
 
+  // Na primeira carga, renderiza tudo
   if (snapshot.metadata.hasPendingWrites === false && !document.getElementById('mainContent').children.length) {
     render();
   }
-  if (changed) render();
 
   setStatus('🟢 Online', false);
 }, (err) => {
@@ -1291,16 +1153,10 @@ function flashSaved() {
 // ════════════════════════════════════════════════════════
 const TC = {
   'PRINCIPAL':'t-principal',
-  'ADITIVO DE VALOR':'t-aditivo',
-  'ADITIVO DE VIGÊNCIA':'t-aditivo',
-  'EXECUÇÃO':'t-execucao',
-  'MEDIÇÃO':'t-medicao',
-  'ATA':'t-ata',
-  'DISPENSA':'t-dispensa',
-  'CESSÃO':'t-cessao',
-  'LICITAÇÃO':'t-licitacao',
-  'LOCAÇÃO':'t-locacao',
-  'OUTRO':'t-outro'
+  'ADITIVO DE VALOR':'t-aditivo','ADITIVO DE VIGÊNCIA':'t-aditivo',
+  'EXECUÇÃO':'t-execucao','MEDIÇÃO':'t-medicao',
+  'ATA':'t-ata','DISPENSA':'t-dispensa','CESSÃO':'t-cessao',
+  'LICITAÇÃO':'t-licitacao','LOCAÇÃO':'t-locacao','OUTRO':'t-outro'
 };
 function tbadge(t) { return `<span class="type-badge ${TC[t]||'t-outro'}">${t}</span>`; }
 
@@ -1320,14 +1176,13 @@ function getFilters() {
 function matchP(p, f) {
   const d = DB[p.id];
   if (d.deleted) return false;
-  const tv = d.tipo || p.tipo;
-  const dv = d.desc || p.desc;
+  const tv  = d.tipo    || p.tipo;
+  const ddm = d.demanda || '';
+  const dv  = d.desc    || p.desc;
   if (f.busca && !p.num.toLowerCase().includes(f.busca) && !dv.toLowerCase().includes(f.busca)) return false;
-  // Tipo = apenas tipos de processo
-  if (f.tipo   && tv !== f.tipo)   return false;
-  // Demanda = ATA, CESSÃO etc
-  if (f.demanda && tv !== f.demanda) return false;
-  if (f.setor && d.setor !== f.setor) return false;
+  if (f.tipo    && tv  !== f.tipo)    return false;
+  if (f.demanda && ddm !== f.demanda) return false;
+  if (f.setor   && d.setor !== f.setor) return false;
   if (f.contrato   === 'sim' && !d.contrato)   return false;
   if (f.contrato   === 'nao' &&  d.contrato)   return false;
   if (f.empenho    === 'sim' && !d.empenho)    return false;
@@ -1339,7 +1194,8 @@ function matchP(p, f) {
 
 function buildRow(p, isFirst) {
   const d = DB[p.id];
-  const tv = d.tipo || p.tipo;
+  const tv    = d.tipo    || p.tipo;
+  const dv_dm = d.demanda || '';
   const dv = d.desc || p.desc;
   const pv = d.pendencia || '';
   const rc = (isFirst?'row-principal':'row-vinculado') + (d.prioridade?' row-priority':'');
@@ -1348,10 +1204,20 @@ function buildRow(p, isFirst) {
       <input type="checkbox" class="priority-check" ${d.prioridade?'checked':''}
         onchange="W._chk('${p.id}','prioridade',this.checked);this.closest('tr').classList.toggle('row-priority',this.checked)">
     </td>
+    <td class="col-demanda editable-cell" id="dm_td_${p.id}">
+      <div class="cell-display ${dv_dm?'':'empty'}" onclick="W._edm('${p.id}')">
+        ${dv_dm ? tbadge(dv_dm) : '— selecionar'}
+        <span class="edit-icon">✎</span>
+      </div>
+      <select class="setor-select" id="dm_sel_${p.id}" onchange="W._sdm('${p.id}',this)" onblur="W._xdm('${p.id}')">
+        <option value="">— Demanda —</option>
+        ${TIPOS_DEMANDA.map(t=>`<option value="${t}"${dv_dm===t?' selected':''}>${t}</option>`).join('')}
+      </select>
+    </td>
     <td class="col-tipo editable-cell" id="t_td_${p.id}">
       <div class="cell-display" onclick="W._et('${p.id}')">${tbadge(tv)}<span class="edit-icon">✎</span></div>
       <select class="setor-select" id="t_sel_${p.id}" onchange="W._st('${p.id}',this)" onblur="W._xt('${p.id}')">
-        ${TIPOS.map(t=>`<option value="${t}"${tv===t?' selected':''}>${t}</option>`).join('')}
+        ${TIPOS_PROCESSO.map(t=>`<option value="${t}"${tv===t?' selected':''}>${t}</option>`).join('')}
       </select>
     </td>
     <td class="col-num">
@@ -1390,9 +1256,6 @@ function buildRow(p, isFirst) {
     <td class="col-emp check-col">
       <input type="checkbox" class="status-check" ${d.empenho?'checked':''} onchange="W._chk('${p.id}','empenho',this.checked)">
     </td>
-    <td class="col-move">
-      <button class="btn-move" title="Mover para outro grupo" onclick="W._openMv('${p.id}')">↕</button>
-    </td>
     <td class="col-acao">
       <button class="btn-delete" onclick="W._del('${p.id}','${p.num}')">🗑</button>
     </td>
@@ -1418,14 +1281,7 @@ function render() {
       <div class="group-header ${open?'open':''}" onclick="W._grp('${g.id}',this)">
         <div class="group-header-left">
           <span class="group-icon">${g.icone}</span>
-          <div class="group-title-wrap" onclick="event.stopPropagation()">
-            <span class="group-title" id="gt_${g.id}" ondblclick="W._editGrpTitle('${g.id}')">${g.tema}</span>
-            <input class="group-title-input" id="gti_${g.id}"
-              value="${g.tema}"
-              onblur="W._saveGrpTitle('${g.id}')"
-              onkeydown="if(event.key==='Enter')W._saveGrpTitle('${g.id}');if(event.key==='Escape')W._cancelGrpTitle('${g.id}')">
-            <button class="btn-edit-group" onclick="W._editGrpTitle('${g.id}')" title="Renomear grupo">✎</button>
-          </div>
+          <span class="group-title">${g.tema}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="group-count">${ps.length} processo${ps.length!==1?'s':''}</span>
@@ -1437,6 +1293,7 @@ function render() {
         <table class="proc-table">
           <thead><tr>
             <th class="col-prio th-prio">🔴</th>
+            <th class="col-demanda">Demanda ✎</th>
             <th class="col-tipo">Tipo ✎</th>
             <th class="col-num">Nº do Processo</th>
             <th class="col-desc">Objeto / Descrição ✎</th>
@@ -1444,7 +1301,6 @@ function render() {
             <th class="col-pend">Pendência ✎</th>
             <th class="col-contr">Contrato</th>
             <th class="col-emp">Empenho</th>
-            <th class="col-move">↕</th>
             <th class="col-acao">Ação</th>
           </tr></thead>
           <tbody id="tbody_${g.id}">
@@ -1486,6 +1342,14 @@ function updateRow(pid) {
   // Tipo
   const tDisp = row.querySelector(`#t_td_${pid} .cell-display`);
   if (tDisp) tDisp.innerHTML = tbadge(tv) + '<span class="edit-icon">✎</span>';
+
+  // Demanda
+  const dmDisp = row.querySelector(`#dm_td_${pid} .cell-display`);
+  const dm = d.demanda || '';
+  if (dmDisp) {
+    dmDisp.className = 'cell-display' + (dm ? '' : ' empty');
+    dmDisp.innerHTML = (dm ? tbadge(dm) : '— selecionar') + '<span class="edit-icon">✎</span>';
+  }
 
   // Descrição
   const dDisp = row.querySelector(`#d_td_${pid} .cell-display`);
@@ -1571,6 +1435,24 @@ W._xt = (pid) => {
   },150);
 };
 
+// DEMANDA
+W._edm = (pid) => {
+  const td=document.getElementById('dm_td_'+pid); if(!td)return;
+  td.querySelector('.cell-display').style.display='none';
+  const s=document.getElementById('dm_sel_'+pid); s.classList.add('active'); s.focus();
+};
+W._sdm = (pid, sel) => { DB[pid].demanda = sel.value; save(pid); W._xdm(pid); };
+W._xdm = (pid) => {
+  setTimeout(()=>{
+    const td=document.getElementById('dm_td_'+pid); if(!td)return;
+    const dm=DB[pid].demanda||'';
+    const sel=document.getElementById('dm_sel_'+pid); sel.classList.remove('active');
+    const dp=td.querySelector('.cell-display'); dp.style.display='';
+    dp.className = 'cell-display' + (dm?'':' empty');
+    dp.innerHTML = (dm ? tbadge(dm) : '— selecionar') + '<span class="edit-icon">✎</span>';
+  },150);
+};
+
 // PENDÊNCIA
 W._ep = (pid) => {
   const td=document.getElementById('p_td_'+pid); if(!td)return;
@@ -1628,213 +1510,190 @@ window.confirmDelete = () => {
 document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
 // ════════════════════════════════════════════════════════
-// RENOMEAR GRUPO
+// RELATÓRIO E EXPORTAÇÃO
 // ════════════════════════════════════════════════════════
-// Armazena nomes personalizados de grupos
-const grpNames = {};
+function getRelFiltered() {
+  const ft = document.getElementById('relFTipo').value;
+  const fd = document.getElementById('relFDemanda').value;
+  const fs = document.getElementById('relFSetor').value;
+  const fc = document.getElementById('relFContrato').value;
 
-W._editGrpTitle = (gid) => {
-  const span  = document.getElementById('gt_'  + gid);
-  const input = document.getElementById('gti_' + gid);
-  if (!span || !input) return;
-  span.classList.add('hidden');
-  input.classList.add('active');
-  input.focus(); input.select();
-};
-
-W._saveGrpTitle = async (gid) => {
-  const span  = document.getElementById('gt_'  + gid);
-  const input = document.getElementById('gti_' + gid);
-  if (!span || !input) return;
-  const newName = input.value.trim();
-  if (newName) {
-    const g = GRUPOS.find(x => x.id === gid);
-    if (g) g.tema = newName;
-    span.textContent = newName;
-    grpNames[gid] = newName;
-    // Salva no Firebase como doc especial
-    if (fbReady) {
-      try {
-        await setDoc(doc(COL, '__grpnames'), grpNames);
-      } catch(e) { console.warn('grpnames save:', e.code); }
-    }
-  }
-  input.classList.remove('active');
-  span.classList.remove('hidden');
-};
-
-W._cancelGrpTitle = (gid) => {
-  const span  = document.getElementById('gt_'  + gid);
-  const input = document.getElementById('gti_' + gid);
-  if (!span || !input) return;
-  input.value = span.textContent;
-  input.classList.remove('active');
-  span.classList.remove('hidden');
-};
-
-// ════════════════════════════════════════════════════════
-// MOVER PROCESSO
-// ════════════════════════════════════════════════════════
-let mvPid = null;
-
-W._openMv = (pid) => {
-  mvPid = pid;
-  const p = GRUPOS.flatMap(g => g.processos).find(x => x.id === pid);
-  const gAtual = GRUPOS.find(g => g.processos.some(x => x.id === pid));
-  if (!p || !gAtual) return;
-
-  document.getElementById('mvNum').textContent  = p.num;
-  document.getElementById('mvDesc').textContent = DB[pid]?.desc || p.desc;
-
-  const sel = document.getElementById('mvGrupoSel');
-  sel.innerHTML = '';
+  const rows = [];
   GRUPOS.forEach(g => {
-    if (g.id === gAtual.id) return; // não mostra o grupo atual
-    const o = document.createElement('option');
-    o.value = g.id; o.textContent = g.icone + ' ' + g.tema;
-    sel.appendChild(o);
-  });
-
-  document.getElementById('mvOverlay').classList.add('active');
-};
-
-W._closeMv = () => {
-  mvPid = null;
-  document.getElementById('mvOverlay').classList.remove('active');
-};
-
-W._confirmarMv = () => {
-  if (!mvPid) return;
-  const novoGid = document.getElementById('mvGrupoSel').value;
-  if (!novoGid) return;
-
-  // Remove do grupo atual
-  const gAtual = GRUPOS.find(g => g.processos.some(x => x.id === mvPid));
-  if (!gAtual) return;
-  const idx = gAtual.processos.findIndex(x => x.id === mvPid);
-  const [proc] = gAtual.processos.splice(idx, 1);
-
-  // Adiciona ao novo grupo
-  const gNovo = GRUPOS.find(g => g.id === novoGid);
-  if (!gNovo) return;
-  gNovo.processos.push(proc);
-
-  // Salva posição no Firebase
-  if (fbReady) {
-    const posPayload = {};
-    GRUPOS.forEach(g => {
-      posPayload[g.id] = g.processos.map(p => p.id);
+    g.processos.forEach(p => {
+      const d = DB[p.id];
+      if (!d || d.deleted) return;
+      const tv = d.tipo || p.tipo;
+      const ddm = d.demanda || '';
+      const dv = d.desc || p.desc;
+      if (ft && tv !== ft) return;
+      if (fd && ddm !== fd) return;
+      if (fs && d.setor !== fs) return;
+      if (fc === 'sim' && !d.contrato) return;
+      if (fc === 'nao' &&  d.contrato) return;
+      rows.push({ num: p.num, tipo: tv, desc: dv, setor: d.setor||'—',
+                  pendencia: d.pendencia||'—',
+                  contrato: d.contrato?'Sim':'Não',
+                  empenho:  d.empenho ?'Sim':'Não',
+                  grupo: g.tema });
     });
-    setDoc(doc(COL, '__positions'), posPayload).catch(e => console.warn('positions:', e.code));
-  }
+  });
+  return rows;
+}
 
-  W._closeMv();
-  render();
-};
+function buildRelCards() {
+  const allProcs = GRUPOS.flatMap(g => g.processos.map(p => ({ p, d: DB[p.id], g })))
+    .filter(x => x.d && !x.d.deleted);
+  const total     = allProcs.length;
+  const comContr  = allProcs.filter(x => x.d.contrato).length;
+  const comEmp    = allProcs.filter(x => x.d.empenho).length;
+  const prio      = allProcs.filter(x => x.d.prioridade).length;
+  const comPend   = allProcs.filter(x => x.d.pendencia).length;
 
-document.getElementById('mvOverlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) W._closeMv();
-});
-
-// ════════════════════════════════════════════════════════
-// NOVO PROCESSO — modal de cadastro
-// ════════════════════════════════════════════════════════
-W._openNovo = () => {
-  // Limpa campos
-  ['np_num','np_desc','np_pend'].forEach(id => document.getElementById(id).value = '');
-  ['np_tipo','np_grupo','np_setor','np_pai'].forEach(id => document.getElementById(id).selectedIndex = 0);
-  document.getElementById('np_contrato').value = 'false';
-  document.getElementById('np_empenho').value  = 'false';
-  document.getElementById('np_prio').value     = 'false';
-  document.getElementById('npError').style.display = 'none';
-
-  // Preenche selects dinâmicos
-  const grpSel = document.getElementById('np_grupo');
-  grpSel.innerHTML = '<option value="">-- Selecione --</option>';
-  GRUPOS.forEach(g => {
-    const o = document.createElement('option');
-    o.value = g.id; o.textContent = g.icone + ' ' + g.tema;
-    grpSel.appendChild(o);
+  // Por tipo/demanda
+  const porTipo = {};
+  allProcs.forEach(x => {
+    const tv = x.d.tipo || x.p.tipo;
+    porTipo[tv] = (porTipo[tv]||0) + 1;
   });
 
-  const setorSel = document.getElementById('np_setor');
-  setorSel.innerHTML = '<option value="">-- Selecione --</option>';
-  SETORES.forEach(s => {
-    const o = document.createElement('option'); o.value = s; o.textContent = s;
-    setorSel.appendChild(o);
-  });
+  const cards = [
+    { num: total,    lbl: 'Total de processos', cls: '' },
+    { num: comContr, lbl: 'Contratos assinados', cls: 'green' },
+    { num: comEmp,   lbl: 'Empenhados',          cls: 'blue' },
+    { num: prio,     lbl: 'Prioritários 🔴',      cls: 'red' },
+    { num: comPend,  lbl: 'Com pendência',        cls: '' },
+    ...Object.entries(porTipo).sort().map(([t,n]) => ({ num: n, lbl: t, cls: '' }))
+  ];
 
-  const paiSel = document.getElementById('np_pai');
-  paiSel.innerHTML = '<option value="">Nenhum (processo principal)</option>';
-  GRUPOS.forEach(g => g.processos.forEach(p => {
-    if (DB[p.id]?.deleted) return;
-    const o = document.createElement('option');
-    o.value = p.id;
-    o.textContent = p.num + ' — ' + (DB[p.id]?.desc || p.desc).substring(0,50);
-    paiSel.appendChild(o);
-  }));
+  document.getElementById('relCards').innerHTML = cards.map(c =>
+    `<div class="rel-card ${c.cls}"><span class="num">${c.num}</span><div class="lbl">${c.lbl}</div></div>`
+  ).join('');
+}
 
-  document.getElementById('npOverlay').classList.add('active');
-  setTimeout(() => document.getElementById('np_num').focus(), 100);
+function buildRelTable() {
+  const rows = getRelFiltered();
+  document.getElementById('relCount').textContent = rows.length + ' processo' + (rows.length!==1?'s':'');
+  document.getElementById('relTableBody').innerHTML = rows.map((r,i) =>
+    `<tr>
+      <td style="color:var(--gray-400);font-size:10px">${i+1}</td>
+      <td style="font-family:monospace;font-size:10px;color:var(--blue)">${r.num}</td>
+      <td>${r.tipo}</td>
+      <td style="max-width:220px">${r.desc}</td>
+      <td>${r.setor}</td>
+      <td style="max-width:160px;color:var(--gray-600)">${r.pendencia}</td>
+      <td style="text-align:center">${r.contrato}</td>
+      <td style="text-align:center">${r.empenho}</td>
+      <td style="color:var(--gray-500);font-size:10px">${r.grupo}</td>
+    </tr>`
+  ).join('');
+}
+
+W._openRelatorio = () => {
+  buildRelCards();
+  buildRelTable();
+  document.getElementById('relOverlay').classList.add('active');
+};
+W._closeRel = () => { document.getElementById('relOverlay').classList.remove('active'); };
+document.getElementById('relOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) W._closeRel(); });
+['relFTipo','relFDemanda','relFSetor','relFContrato'].forEach(id =>
+  document.getElementById(id).addEventListener('change', buildRelTable)
+);
+
+// ── EXPORTAR EXCEL (.xlsx via CSV) ──
+W._exportExcel = () => {
+  const rows = getRelFiltered();
+  const headers = ['Nº do Processo','Tipo','Objeto / Descrição','Setor Atual','Pendência','Contrato','Empenho','Grupo'];
+  const csvRows = [
+    headers.join(';'),
+    ...rows.map(r => [r.num,r.tipo,r.desc,r.setor,r.pendencia,r.contrato,r.empenho,r.grupo]
+      .map(v => `"${String(v).replace(/"/g,'""')}"`)
+      .join(';'))
+  ];
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `processos_ssp_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
-W._closeNovo = () => {
-  document.getElementById('npOverlay').classList.remove('active');
+// ── EXPORTAR WORD (.doc via HTML) ──
+W._exportWord = () => {
+  const rows = getRelFiltered();
+  const data = new Date().toLocaleDateString('pt-BR');
+  let html = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office'
+          xmlns:w='urn:schemas-microsoft-com:office:word'
+          xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 11pt; }
+      h1 { color: #0d2b4e; font-size: 14pt; margin-bottom: 4pt; }
+      h2 { color: #1e6fb5; font-size: 11pt; margin-top: 12pt; margin-bottom: 4pt; }
+      p  { font-size: 10pt; color: #555; margin-bottom: 12pt; }
+      table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+      th { background: #0d2b4e; color: white; padding: 6pt 8pt; text-align: left; }
+      td { padding: 5pt 8pt; border-bottom: 1pt solid #e2e8f0; }
+      tr:nth-child(even) td { background: #f8fafc; }
+    </style></head><body>
+    <h1>📋 Painel de Acompanhamento de Processos — SSP</h1>
+    <p>Data de geração: ${data} &nbsp;|&nbsp; Total: ${rows.length} processo${rows.length!==1?'s':''}</p>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Nº do Processo</th><th>Tipo</th><th>Objeto / Descrição</th>
+        <th>Setor Atual</th><th>Pendência</th><th>Contrato</th><th>Empenho</th><th>Grupo</th>
+      </tr></thead><tbody>
+    ${rows.map((r,i) => `<tr>
+      <td>${i+1}</td><td>${r.num}</td><td>${r.tipo}</td><td>${r.desc}</td>
+      <td>${r.setor}</td><td>${r.pendencia}</td><td>${r.contrato}</td><td>${r.empenho}</td><td>${r.grupo}</td>
+    </tr>`).join('')}
+    </tbody></table></body></html>`;
+
+  const blob = new Blob(['\ufeff'+html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `processos_ssp_${new Date().toISOString().slice(0,10)}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
-W._salvarNovo = async () => {
-  const num   = document.getElementById('np_num').value.trim();
-  const desc  = document.getElementById('np_desc').value.trim();
-  const tipo  = document.getElementById('np_tipo').value;
-  const gid   = document.getElementById('np_grupo').value;
-  const setor = document.getElementById('np_setor').value;
-  const pend  = document.getElementById('np_pend').value.trim();
-  const contr = document.getElementById('np_contrato').value === 'true';
-  const emp   = document.getElementById('np_empenho').value  === 'true';
-  const prio  = document.getElementById('np_prio').value     === 'true';
-
-  const errEl = document.getElementById('npError');
-
-  // Validações
-  if (!num)  { errEl.textContent = '⚠️ Informe o Nº do Processo.';      errEl.style.display='block'; return; }
-  if (!desc) { errEl.textContent = '⚠️ Informe o Objeto / Descrição.';  errEl.style.display='block'; return; }
-  if (!tipo) { errEl.textContent = '⚠️ Selecione o Tipo.';              errEl.style.display='block'; return; }
-  if (!gid)  { errEl.textContent = '⚠️ Selecione o Tema / Grupo.';      errEl.style.display='block'; return; }
-
-  // Verifica duplicidade de número
-  const allProcs = GRUPOS.flatMap(g => g.processos);
-  if (allProcs.some(p => p.num === num)) {
-    errEl.textContent = '⚠️ Já existe um processo com esse número.';
-    errEl.style.display = 'block'; return;
-  }
-
-  errEl.style.display = 'none';
-
-  // Gera novo ID único
-  const newId = 'px_' + Date.now();
-
-  // Adiciona ao grupo correto em memória
-  const grupo = GRUPOS.find(g => g.id === gid);
-  if (!grupo) return;
-  grupo.processos.push({ id: newId, tipo, num, desc });
-
-  // Cria registro no DB local e no Firebase
-  DB[newId] = {
-    setor, pendencia: pend, contrato: contr,
-    empenho: emp, prioridade: prio,
-    desc: '', tipo: '', deleted: false
-  };
-
-  await save(newId);
-
-  W._closeNovo();
-  render();
+// ── IMPRIMIR / PDF ──
+W._printRel = () => {
+  const rows = getRelFiltered();
+  const data = new Date().toLocaleDateString('pt-BR');
+  const html = `<!DOCTYPE html><html><head><meta charset='utf-8'>
+    <title>Processos SSP — ${data}</title>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 10pt; margin: 20pt; }
+      h1 { color: #0d2b4e; font-size: 14pt; margin-bottom: 3pt; }
+      p  { color: #555; font-size: 9pt; margin-bottom: 10pt; }
+      table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+      th { background: #0d2b4e; color: white; padding: 5pt 6pt; text-align: left; }
+      td { padding: 4pt 6pt; border-bottom: 1pt solid #e2e8f0; }
+      tr:nth-child(even) td { background: #f8fafc; }
+      @media print { @page { margin: 15mm; } }
+    </style></head><body>
+    <h1>Painel de Acompanhamento de Processos — SSP</h1>
+    <p>Data: ${data} | Total: ${rows.length} processo${rows.length!==1?'s':''}</p>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Nº do Processo</th><th>Tipo</th><th>Objeto / Descrição</th>
+        <th>Setor</th><th>Pendência</th><th>Contrato</th><th>Empenho</th><th>Grupo</th>
+      </tr></thead><tbody>
+      ${rows.map((r,i)=>`<tr>
+        <td>${i+1}</td><td>${r.num}</td><td>${r.tipo}</td><td>${r.desc}</td>
+        <td>${r.setor}</td><td>${r.pendencia}</td><td>${r.contrato}</td><td>${r.empenho}</td><td>${r.grupo}</td>
+      </tr>`).join('')}
+      </tbody></table></body></html>`;
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
 };
-
-// Fecha ao clicar fora
-document.getElementById('npOverlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) W._closeNovo();
-});
 
 // ════════════════════════════════════════════════════════
 // FILTROS
