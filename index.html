@@ -374,6 +374,7 @@
   .t-adesao    { background: #e0f2fe; color: #075985; }
   .t-cessao    { background: #fce7f3; color: #9d174d; }
   .t-medicao   { background: #fff7ed; color: #9a3412; }
+  .t-licitacao { background: #ede9fe; color: #5b21b6; }
   .t-locacao   { background: #ecfdf5; color: #065f46; }
   .t-outro     { background: var(--gray-100); color: var(--gray-500); }
 
@@ -586,7 +587,90 @@
   .btn-confirm-save:hover { background: #15803d; }
   .btn-confirm-save:active { opacity: 0.8; }
 
-  /* ─── EMPTY STATE ─── */
+  /* ─── GROUP TITLE EDITABLE ─── */
+  .group-title-wrap { display: flex; align-items: center; gap: 6px; }
+  .group-title { font-size: 13px; font-weight: 700; cursor: text; }
+  .group-title-input {
+    font-size: 13px; font-weight: 700; font-family: inherit;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 5px; color: white;
+    padding: 2px 8px; outline: none;
+    min-width: 200px;
+    display: none;
+  }
+  .group-title-input.active { display: block; }
+  .group-title.hidden { display: none; }
+  .btn-edit-group {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px; color: rgba(255,255,255,0.6);
+    font-size: 10px; cursor: pointer; padding: 2px 6px;
+    transition: all 0.15s;
+  }
+  .btn-edit-group:hover { background: rgba(255,255,255,0.2); color: white; }
+
+  /* ─── MOVE PROCESS BUTTON ─── */
+  .btn-move {
+    background: none; border: 1.5px solid var(--gray-300);
+    border-radius: 5px; width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--gray-400); font-size: 12px;
+    transition: all 0.15s; margin: 0 auto;
+  }
+  .btn-move:hover { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+
+  /* ─── MOVE MODAL ─── */
+  .mv-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .mv-overlay.active { opacity: 1; pointer-events: all; }
+  .mv-modal {
+    background: white; border-radius: 12px;
+    width: 90%; max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    transform: translateY(16px); transition: transform 0.2s;
+    overflow: hidden;
+  }
+  .mv-overlay.active .mv-modal { transform: translateY(0); }
+  .mv-header {
+    background: var(--navy); color: white;
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mv-header h3 { font-size: 14px; font-weight: 700; }
+  .mv-body { padding: 20px; }
+  .mv-body label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; display: block; margin-bottom: 6px; }
+  .mv-body select {
+    width: 100%; border: 1px solid var(--gray-300); border-radius: 7px;
+    padding: 9px 10px; font-size: 13px; font-family: inherit;
+    color: var(--gray-900); outline: none;
+  }
+  .mv-body select:focus { border-color: var(--blue); }
+  .mv-proc-info {
+    background: var(--gray-50); border-radius: 7px;
+    padding: 10px 12px; margin-bottom: 16px;
+    font-size: 12px; color: var(--gray-700);
+    border: 1px solid var(--gray-200);
+  }
+  .mv-proc-info strong { color: var(--blue); display: block; font-family: monospace; font-size: 11px; margin-bottom: 2px; }
+  .mv-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 18px; border-top: 1px solid var(--gray-200); }
+  .mv-btn-cancel {
+    background: var(--gray-100); border: 1px solid var(--gray-200);
+    border-radius: 7px; padding: 8px 18px;
+    font-size: 13px; font-weight: 600; color: var(--gray-600); cursor: pointer; font-family: inherit;
+  }
+  .mv-btn-confirm {
+    background: var(--blue); border: none;
+    border-radius: 7px; padding: 8px 20px;
+    font-size: 13px; font-weight: 700; color: white; cursor: pointer; font-family: inherit;
+  }
+  .mv-btn-confirm:hover { background: var(--navy); }
+  .col-move { width: 40px; text-align: center; }
   .empty-state {
     text-align: center;
     padding: 40px;
@@ -763,25 +847,29 @@
       <label>🔍 Buscar</label>
       <input type="text" id="fBusca" placeholder="Número ou objeto...">
     </div>
-    <div class="filter-group">
-      <label>Tema</label>
-      <select id="fTema">
-        <option value="">Todos os temas</option>
-      </select>
-    </div>
+    <select id="fTema" style="display:none">
+      <option value="">Todos os temas</option>
+    </select>
     <div class="filter-group">
       <label>Tipo</label>
       <select id="fTipo">
         <option value="">Todos os tipos</option>
-        <option value="PRINCIPAL">Principal</option>
-        <option value="ADITIVO">Aditivo</option>
+        <option value="ADITIVO DE VALOR">Aditivo de Valor</option>
+        <option value="ADITIVO DE VIGÊNCIA">Aditivo de Vigência</option>
         <option value="EXECUÇÃO">Execução</option>
-        <option value="ATA">Ata</option>
-        <option value="DISPENSA">Dispensa</option>
-        <option value="ADESÃO">Adesão</option>
-        <option value="CESSÃO">Cessão</option>
-        <option value="LOCAÇÃO">Locação</option>
         <option value="MEDIÇÃO">Medição</option>
+        <option value="PRINCIPAL">Principal</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Demanda</label>
+      <select id="fDemanda">
+        <option value="">Todas as demandas</option>
+        <option value="ATA">Ata</option>
+        <option value="CESSÃO">Cessão</option>
+        <option value="DISPENSA">Dispensa</option>
+        <option value="LICITAÇÃO">Licitação</option>
+        <option value="LOCAÇÃO">Locação</option>
         <option value="OUTRO">Outro</option>
       </select>
     </div>
@@ -865,9 +953,17 @@
           <label>Tipo *</label>
           <select id="np_tipo">
             <option value="">-- Selecione --</option>
-            <option>PRINCIPAL</option><option>ADITIVO</option><option>EXECUÇÃO</option>
-            <option>ATA</option><option>DISPENSA</option><option>ADESÃO</option>
-            <option>CESSÃO</option><option>LOCAÇÃO</option><option>MEDIÇÃO</option><option>OUTRO</option>
+            <option>ADITIVO DE VALOR</option>
+            <option>ADITIVO DE VIGÊNCIA</option>
+            <option>ATA</option>
+            <option>CESSÃO</option>
+            <option>DISPENSA</option>
+            <option>EXECUÇÃO</option>
+            <option>LICITAÇÃO</option>
+            <option>LOCAÇÃO</option>
+            <option>MEDIÇÃO</option>
+            <option>OUTRO</option>
+            <option>PRINCIPAL</option>
           </select>
         </div>
         <div class="np-field">
@@ -930,6 +1026,28 @@
   </div>
 </div>
 
+<!-- MODAL MOVER PROCESSO -->
+<div class="mv-overlay" id="mvOverlay">
+  <div class="mv-modal">
+    <div class="mv-header">
+      <h3>↕ Mover Processo para outro Grupo</h3>
+      <button class="np-close" onclick="W._closeMv()">×</button>
+    </div>
+    <div class="mv-body">
+      <div class="mv-proc-info">
+        <strong id="mvNum">—</strong>
+        <span id="mvDesc">—</span>
+      </div>
+      <label>Mover para o grupo:</label>
+      <select id="mvGrupoSel"></select>
+    </div>
+    <div class="mv-footer">
+      <button class="mv-btn-cancel" onclick="W._closeMv()">Cancelar</button>
+      <button class="mv-btn-confirm" onclick="W._confirmarMv()">↕ Mover</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM DELETE MODAL -->
 <div class="modal-overlay" id="deleteModal">
   <div class="modal">
@@ -971,7 +1089,9 @@ const COL  = collection(db, 'processos'); // cada processo = 1 documento
 // DADOS BASE
 // ════════════════════════════════════════════════════════
 const SETORES = ['GAB','DADM','GOBRE','GLC','CCON','CC','DFIN/CGFR','DFIN/EMPENHO','SUSP'];
-const TIPOS   = ['PRINCIPAL','ADITIVO','EXECUÇÃO','ATA','DISPENSA','ADESÃO','CESSÃO','LOCAÇÃO','MEDIÇÃO','OUTRO'];
+const TIPOS_PROCESSO  = ['ADITIVO DE VALOR','ADITIVO DE VIGÊNCIA','EXECUÇÃO','MEDIÇÃO','PRINCIPAL'];
+const TIPOS_DEMANDA   = ['ATA','CESSÃO','DISPENSA','LICITAÇÃO','LOCAÇÃO','OUTRO'];
+const TIPOS           = [...TIPOS_PROCESSO, ...TIPOS_DEMANDA];
 
 const GRUPOS = [
   { id:'g1', icone:'🏗️', tema:'Manutenção Predial', processos:[
@@ -1066,13 +1186,44 @@ const unsub = onSnapshot(COL, (snapshot) => {
 
   snapshot.docChanges().forEach(change => {
     const pid = change.doc.id;
-    if (!DB[pid]) return; // processo não existe na base
+    if (change.type === 'removed') return;
+
+    // Nomes personalizados de grupos
+    if (pid === '__grpnames') {
+      const names = change.doc.data();
+      Object.keys(names).forEach(gid => {
+        const g = GRUPOS.find(x => x.id === gid);
+        if (g && names[gid]) {
+          g.tema = names[gid];
+          const span = document.getElementById('gt_' + gid);
+          if (span) span.textContent = names[gid];
+          const inp  = document.getElementById('gti_' + gid);
+          if (inp)  inp.value = names[gid];
+        }
+      });
+      return;
+    }
+
+    // Posições dos processos (após mover)
+    if (pid === '__positions') {
+      const pos = change.doc.data();
+      Object.keys(pos).forEach(gid => {
+        const g = GRUPOS.find(x => x.id === gid);
+        if (!g) return;
+        const order = pos[gid];
+        const allProcs = GRUPOS.flatMap(gr => gr.processos);
+        g.processos = order.map(id => allProcs.find(p => p.id === id)).filter(Boolean);
+      });
+      changed = true;
+      return;
+    }
+
+    if (!DB[pid]) return;
     if (change.type === 'removed') return;
 
     const remote = change.doc.data();
     const local  = DB[pid];
 
-    // Atualiza só os campos que mudaram no servidor
     let fieldChanged = false;
     Object.keys(remote).forEach(k => {
       if (local[k] !== remote[k]) {
@@ -1083,15 +1234,14 @@ const unsub = onSnapshot(COL, (snapshot) => {
 
     if (fieldChanged) {
       changed = true;
-      // Atualiza só a linha afetada — NÃO re-renderiza tudo
       updateRow(pid);
     }
   });
 
-  // Na primeira carga, renderiza tudo
   if (snapshot.metadata.hasPendingWrites === false && !document.getElementById('mainContent').children.length) {
     render();
   }
+  if (changed) render();
 
   setStatus('🟢 Online', false);
 }, (err) => {
@@ -1140,9 +1290,17 @@ function flashSaved() {
 // RENDER COMPLETO — só na carga inicial e em filtros
 // ════════════════════════════════════════════════════════
 const TC = {
-  'PRINCIPAL':'t-principal','ADITIVO':'t-aditivo','EXECUÇÃO':'t-execucao',
-  'ATA':'t-ata','DISPENSA':'t-dispensa','ADESÃO':'t-adesao',
-  'CESSÃO':'t-cessao','LOCAÇÃO':'t-locacao','MEDIÇÃO':'t-medicao','OUTRO':'t-outro'
+  'PRINCIPAL':'t-principal',
+  'ADITIVO DE VALOR':'t-aditivo',
+  'ADITIVO DE VIGÊNCIA':'t-aditivo',
+  'EXECUÇÃO':'t-execucao',
+  'MEDIÇÃO':'t-medicao',
+  'ATA':'t-ata',
+  'DISPENSA':'t-dispensa',
+  'CESSÃO':'t-cessao',
+  'LICITAÇÃO':'t-licitacao',
+  'LOCAÇÃO':'t-locacao',
+  'OUTRO':'t-outro'
 };
 function tbadge(t) { return `<span class="type-badge ${TC[t]||'t-outro'}">${t}</span>`; }
 
@@ -1151,6 +1309,7 @@ function getFilters() {
     busca:      document.getElementById('fBusca').value.trim().toLowerCase(),
     tema:       document.getElementById('fTema').value,
     tipo:       document.getElementById('fTipo').value,
+    demanda:    document.getElementById('fDemanda').value,
     setor:      document.getElementById('fSetor').value,
     contrato:   document.getElementById('fContrato').value,
     empenho:    document.getElementById('fEmpenho').value,
@@ -1164,7 +1323,10 @@ function matchP(p, f) {
   const tv = d.tipo || p.tipo;
   const dv = d.desc || p.desc;
   if (f.busca && !p.num.toLowerCase().includes(f.busca) && !dv.toLowerCase().includes(f.busca)) return false;
-  if (f.tipo  && tv !== f.tipo) return false;
+  // Tipo = apenas tipos de processo
+  if (f.tipo   && tv !== f.tipo)   return false;
+  // Demanda = ATA, CESSÃO etc
+  if (f.demanda && tv !== f.demanda) return false;
   if (f.setor && d.setor !== f.setor) return false;
   if (f.contrato   === 'sim' && !d.contrato)   return false;
   if (f.contrato   === 'nao' &&  d.contrato)   return false;
@@ -1228,6 +1390,9 @@ function buildRow(p, isFirst) {
     <td class="col-emp check-col">
       <input type="checkbox" class="status-check" ${d.empenho?'checked':''} onchange="W._chk('${p.id}','empenho',this.checked)">
     </td>
+    <td class="col-move">
+      <button class="btn-move" title="Mover para outro grupo" onclick="W._openMv('${p.id}')">↕</button>
+    </td>
     <td class="col-acao">
       <button class="btn-delete" onclick="W._del('${p.id}','${p.num}')">🗑</button>
     </td>
@@ -1253,7 +1418,14 @@ function render() {
       <div class="group-header ${open?'open':''}" onclick="W._grp('${g.id}',this)">
         <div class="group-header-left">
           <span class="group-icon">${g.icone}</span>
-          <span class="group-title">${g.tema}</span>
+          <div class="group-title-wrap" onclick="event.stopPropagation()">
+            <span class="group-title" id="gt_${g.id}" ondblclick="W._editGrpTitle('${g.id}')">${g.tema}</span>
+            <input class="group-title-input" id="gti_${g.id}"
+              value="${g.tema}"
+              onblur="W._saveGrpTitle('${g.id}')"
+              onkeydown="if(event.key==='Enter')W._saveGrpTitle('${g.id}');if(event.key==='Escape')W._cancelGrpTitle('${g.id}')">
+            <button class="btn-edit-group" onclick="W._editGrpTitle('${g.id}')" title="Renomear grupo">✎</button>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="group-count">${ps.length} processo${ps.length!==1?'s':''}</span>
@@ -1272,6 +1444,7 @@ function render() {
             <th class="col-pend">Pendência ✎</th>
             <th class="col-contr">Contrato</th>
             <th class="col-emp">Empenho</th>
+            <th class="col-move">↕</th>
             <th class="col-acao">Ação</th>
           </tr></thead>
           <tbody id="tbody_${g.id}">
@@ -1455,6 +1628,115 @@ window.confirmDelete = () => {
 document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
 // ════════════════════════════════════════════════════════
+// RENOMEAR GRUPO
+// ════════════════════════════════════════════════════════
+// Armazena nomes personalizados de grupos
+const grpNames = {};
+
+W._editGrpTitle = (gid) => {
+  const span  = document.getElementById('gt_'  + gid);
+  const input = document.getElementById('gti_' + gid);
+  if (!span || !input) return;
+  span.classList.add('hidden');
+  input.classList.add('active');
+  input.focus(); input.select();
+};
+
+W._saveGrpTitle = async (gid) => {
+  const span  = document.getElementById('gt_'  + gid);
+  const input = document.getElementById('gti_' + gid);
+  if (!span || !input) return;
+  const newName = input.value.trim();
+  if (newName) {
+    const g = GRUPOS.find(x => x.id === gid);
+    if (g) g.tema = newName;
+    span.textContent = newName;
+    grpNames[gid] = newName;
+    // Salva no Firebase como doc especial
+    if (fbReady) {
+      try {
+        await setDoc(doc(COL, '__grpnames'), grpNames);
+      } catch(e) { console.warn('grpnames save:', e.code); }
+    }
+  }
+  input.classList.remove('active');
+  span.classList.remove('hidden');
+};
+
+W._cancelGrpTitle = (gid) => {
+  const span  = document.getElementById('gt_'  + gid);
+  const input = document.getElementById('gti_' + gid);
+  if (!span || !input) return;
+  input.value = span.textContent;
+  input.classList.remove('active');
+  span.classList.remove('hidden');
+};
+
+// ════════════════════════════════════════════════════════
+// MOVER PROCESSO
+// ════════════════════════════════════════════════════════
+let mvPid = null;
+
+W._openMv = (pid) => {
+  mvPid = pid;
+  const p = GRUPOS.flatMap(g => g.processos).find(x => x.id === pid);
+  const gAtual = GRUPOS.find(g => g.processos.some(x => x.id === pid));
+  if (!p || !gAtual) return;
+
+  document.getElementById('mvNum').textContent  = p.num;
+  document.getElementById('mvDesc').textContent = DB[pid]?.desc || p.desc;
+
+  const sel = document.getElementById('mvGrupoSel');
+  sel.innerHTML = '';
+  GRUPOS.forEach(g => {
+    if (g.id === gAtual.id) return; // não mostra o grupo atual
+    const o = document.createElement('option');
+    o.value = g.id; o.textContent = g.icone + ' ' + g.tema;
+    sel.appendChild(o);
+  });
+
+  document.getElementById('mvOverlay').classList.add('active');
+};
+
+W._closeMv = () => {
+  mvPid = null;
+  document.getElementById('mvOverlay').classList.remove('active');
+};
+
+W._confirmarMv = () => {
+  if (!mvPid) return;
+  const novoGid = document.getElementById('mvGrupoSel').value;
+  if (!novoGid) return;
+
+  // Remove do grupo atual
+  const gAtual = GRUPOS.find(g => g.processos.some(x => x.id === mvPid));
+  if (!gAtual) return;
+  const idx = gAtual.processos.findIndex(x => x.id === mvPid);
+  const [proc] = gAtual.processos.splice(idx, 1);
+
+  // Adiciona ao novo grupo
+  const gNovo = GRUPOS.find(g => g.id === novoGid);
+  if (!gNovo) return;
+  gNovo.processos.push(proc);
+
+  // Salva posição no Firebase
+  if (fbReady) {
+    const posPayload = {};
+    GRUPOS.forEach(g => {
+      posPayload[g.id] = g.processos.map(p => p.id);
+    });
+    setDoc(doc(COL, '__positions'), posPayload).catch(e => console.warn('positions:', e.code));
+  }
+
+  W._closeMv();
+  render();
+};
+
+document.getElementById('mvOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) W._closeMv();
+});
+
+// ════════════════════════════════════════════════════════
 // NOVO PROCESSO — modal de cadastro
 // ════════════════════════════════════════════════════════
 W._openNovo = () => {
@@ -1558,10 +1840,10 @@ document.getElementById('npOverlay').addEventListener('click', e => {
 // FILTROS
 // ════════════════════════════════════════════════════════
 window.clearFilters = () => {
-  ['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id=>document.getElementById(id).value='');
+  ['fBusca','fTema','fTipo','fDemanda','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id=>document.getElementById(id).value='');
   render();
 };
-['fBusca','fTema','fTipo','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id=>{
+['fBusca','fTema','fTipo','fDemanda','fSetor','fContrato','fEmpenho','fPrioridade'].forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('change',render);
   if(id==='fBusca')el.addEventListener('input',render);
