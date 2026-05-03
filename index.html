@@ -281,6 +281,28 @@
   .rel-filters {
     display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-end;
   }
+
+  /* Opções de exportação — rádio visual */
+  .rel-opcoes { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .rel-opcao-item {
+    flex: 1; min-width: 200px; cursor: pointer;
+  }
+  .rel-opcao-item input[type="radio"] { display: none; }
+  .rel-opcao-label {
+    display: flex; align-items: center; gap: 12px;
+    border: 2px solid var(--gray-200); border-radius: 10px;
+    padding: 14px 16px; background: var(--gray-50);
+    transition: all 0.15s; cursor: pointer;
+  }
+  .rel-opcao-item input:checked + .rel-opcao-label {
+    border-color: var(--blue); background: var(--blue-light);
+    box-shadow: 0 0 0 3px rgba(30,111,181,0.1);
+  }
+  .rel-opcao-label:hover { border-color: var(--gray-300); background: white; }
+  .rel-opcao-item input:checked + .rel-opcao-label:hover { border-color: var(--blue); background: var(--blue-light); }
+  .rel-opcao-icon { font-size: 26px; flex-shrink: 0; }
+  .rel-opcao-label strong { display: block; font-size: 13px; color: var(--gray-900); }
+  .rel-opcao-label small { font-size: 11px; color: var(--gray-500); margin-top: 2px; display: block; }
   .rel-field { display: flex; flex-direction: column; gap: 4px; }
   .rel-field label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; }
   .rel-field select {
@@ -1119,8 +1141,6 @@
       <label>Setor Atual</label>
       <select id="fSetor">
         <option value="">Todos os setores</option>
-        <option value="CC">CC</option>
-        <option value="CCON">CCON</option>
         <option value="DADM">DADM</option>
         <option value="DFIN/CGFR">DFIN/CGFR</option>
         <option value="DFIN/CGFR/AUTORIZAÇÃO">DFIN/CGFR/AUTORIZAÇÃO</option>
@@ -1129,7 +1149,10 @@
         <option value="DFIN/LIBERAÇÃO">DFIN/LIBERAÇÃO</option>
         <option value="GAB">GAB</option>
         <option value="GLC">GLC</option>
+        <option value="GLC/CC">GLC/CC</option>
+        <option value="GLC/CCON">GLC/CCON</option>
         <option value="GOBRE">GOBRE</option>
+        <option value="SEAD">SEAD</option>
         <option value="SUSP">SUSP</option>
       </select>
     </div>
@@ -1183,57 +1206,28 @@
       <div class="rel-section-title">Resumo Geral</div>
       <div class="rel-cards" id="relCards"></div>
 
-      <div class="rel-section-title">Filtrar para exportar</div>
-      <div class="rel-filters">
-        <div class="rel-field">
-          <label>Tipo</label>
-          <select id="relFTipo">
-            <option value="">Todos os tipos</option>
-            <option value="ADITIVO DE VALOR">Aditivo de Valor</option>
-            <option value="ADITIVO DE VIGÊNCIA">Aditivo de Vigência</option>
-            <option value="EXECUÇÃO">Execução</option>
-            <option value="MEDIÇÃO">Medição</option>
-            <option value="PRINCIPAL">Principal</option>
-          </select>
-        </div>
-        <div class="rel-field">
-          <label>Demanda</label>
-          <select id="relFDemanda">
-            <option value="">Todas as demandas</option>
-            <option value="ATA">Ata</option>
-            <option value="CESSÃO">Cessão</option>
-            <option value="DISPENSA">Dispensa</option>
-            <option value="LICITAÇÃO">Licitação</option>
-            <option value="LOCAÇÃO">Locação</option>
-            <option value="OUTRO">Outro</option>
-          </select>
-        </div>
-        <div class="rel-field">
-          <label>Setor Atual</label>
-          <select id="relFSetor">
-            <option value="">Todos os setores</option>
-            <option value="CC">CC</option>
-            <option value="CCON">CCON</option>
-            <option value="DADM">DADM</option>
-            <option value="DFIN/CGFR">DFIN/CGFR</option>
-            <option value="DFIN/CGFR/AUTORIZAÇÃO">DFIN/CGFR/AUTORIZAÇÃO</option>
-            <option value="DFIN/CGFR/NR-ARO">DFIN/CGFR/NR-ARO</option>
-            <option value="DFIN/EMPENHO">DFIN/EMPENHO</option>
-            <option value="DFIN/LIBERAÇÃO">DFIN/LIBERAÇÃO</option>
-            <option value="GAB">GAB</option>
-            <option value="GLC">GLC</option>
-            <option value="GOBRE">GOBRE</option>
-            <option value="SUSP">SUSP</option>
-          </select>
-        </div>
-        <div class="rel-field">
-          <label>Contrato</label>
-          <select id="relFContrato">
-            <option value="">Todos</option>
-            <option value="sim">Assinado ✓</option>
-            <option value="nao">Não assinado</option>
-          </select>
-        </div>
+      <div class="rel-section-title">Selecionar processos para exportar</div>
+      <div class="rel-opcoes">
+        <label class="rel-opcao-item">
+          <input type="radio" name="relOpcao" id="relOpcaoTodos" value="todos" checked onchange="buildRelTable()">
+          <span class="rel-opcao-label">
+            <span class="rel-opcao-icon">📋</span>
+            <span>
+              <strong>Todos os processos</strong>
+              <small>Exporta a lista completa de processos cadastrados</small>
+            </span>
+          </span>
+        </label>
+        <label class="rel-opcao-item">
+          <input type="radio" name="relOpcao" id="relOpcaoPrio" value="prioridade" onchange="buildRelTable()">
+          <span class="rel-opcao-label">
+            <span class="rel-opcao-icon">🔴</span>
+            <span>
+              <strong>Somente Prioritários</strong>
+              <small>Exporta apenas os processos marcados como prioridade</small>
+            </span>
+          </span>
+        </label>
       </div>
 
       <div class="rel-export-btns">
@@ -1252,12 +1246,13 @@
             <thead><tr>
               <th>#</th>
               <th>Nº do Processo</th>
-              <th>Tipo</th>
               <th>Objeto / Descrição</th>
               <th>Setor Atual</th>
               <th>Pendência</th>
               <th>Contrato</th>
               <th>Empenho</th>
+              <th>Grupo</th>
+            </tr></thead>
               <th>Grupo</th>
             </tr></thead>
             <tbody id="relTableBody"></tbody>
@@ -1491,7 +1486,7 @@ const COL  = collection(db, 'processos'); // cada processo = 1 documento
 // ════════════════════════════════════════════════════════
 // DADOS BASE
 // ════════════════════════════════════════════════════════
-const SETORES = ['CC','CCON','DADM','DFIN/CGFR','DFIN/CGFR/AUTORIZAÇÃO','DFIN/CGFR/NR-ARO','DFIN/EMPENHO','DFIN/LIBERAÇÃO','GAB','GLC','GOBRE','SUSP'];
+const SETORES = ['DADM','DFIN/CGFR','DFIN/CGFR/AUTORIZAÇÃO','DFIN/CGFR/NR-ARO','DFIN/EMPENHO','DFIN/LIBERAÇÃO','GAB','GLC','GLC/CC','GLC/CCON','GOBRE','SEAD','SUSP'];
 const TIPOS_PROCESSO = ['ADITIVO DE VALOR','ADITIVO DE VIGÊNCIA','EXECUÇÃO','MEDIÇÃO','PRINCIPAL'];
 const TIPOS_DEMANDA  = ['ATA','CESSÃO','DISPENSA','LICITAÇÃO','OUTRO'];
 const TIPOS          = [...TIPOS_PROCESSO, ...TIPOS_DEMANDA];
@@ -1661,16 +1656,26 @@ const unsub = onSnapshot(COL, (snapshot) => {
 
     // ── Processo novo ou existente ──
     if (!DB[pid]) {
-      // Processo novo vindo de outro dispositivo
-      // Verifica se existe nos metadados salvos
       DB[pid] = {};
     }
     const remote = change.doc.data();
+
+    // Migração automática de valores antigos de setor
+    if (remote.setor === 'CC')   remote.setor = 'GLC/CC';
+    if (remote.setor === 'CCON') remote.setor = 'GLC/CCON';
+
     const local  = DB[pid];
     let fieldChanged = false;
     Object.keys(remote).forEach(k => {
       if (local[k] !== remote[k]) { local[k] = remote[k]; fieldChanged = true; }
     });
+
+    // Se migrou o setor, salva o novo valor no Firebase automaticamente
+    if (fieldChanged && (remote.setor === 'GLC/CC' || remote.setor === 'GLC/CCON')) {
+      setDoc(doc(COL, pid), { setor: remote.setor }, { merge: true })
+        .catch(e => console.warn('migration save:', e.code));
+    }
+
     if (fieldChanged) { changed = true; updateRow(pid); }
   });
 
@@ -2719,29 +2724,29 @@ document.getElementById('mvOverlay').addEventListener('click', e => {
 // RELATÓRIO E EXPORTAÇÃO
 // ════════════════════════════════════════════════════════
 function getRelFiltered() {
-  const ft = document.getElementById('relFTipo').value;
-  const fd = document.getElementById('relFDemanda').value;
-  const fs = document.getElementById('relFSetor').value;
-  const fc = document.getElementById('relFContrato').value;
+  const opcao = document.querySelector('input[name="relOpcao"]:checked')?.value || 'todos';
 
   const rows = [];
   GRUPOS.forEach(g => {
     g.processos.forEach(p => {
       const d = DB[p.id];
       if (!d || d.deleted) return;
-      const tv = d.tipo || p.tipo;
-      const ddm = d.demanda || '';
-      const dv = d.desc || p.desc;
-      if (ft && tv !== ft) return;
-      if (fd && ddm !== fd) return;
-      if (fs && d.setor !== fs) return;
-      if (fc === 'sim' && !d.contrato) return;
-      if (fc === 'nao' &&  d.contrato) return;
-      rows.push({ num: p.num, tipo: tv, desc: dv, setor: d.setor||'—',
-                  pendencia: d.pendencia||'—',
-                  contrato: d.contrato?'Sim':'Não',
-                  empenho:  d.empenho ?'Sim':'Não',
-                  grupo: g.tema });
+      // Filtra por opção selecionada
+      if (opcao === 'prioridade' && !d.prioridade) return;
+      const tv = d.tipo    || p.tipo;
+      const dv = d.desc    || p.desc;
+      rows.push({
+        num:      p.num,
+        tipo:     tv,
+        demanda:  d.demanda || '—',
+        desc:     dv,
+        setor:    d.setor    || '—',
+        pendencia:d.pendencia|| '—',
+        contrato: d.contrato ? 'Sim' : 'Não',
+        empenho:  d.empenho  ? 'Sim' : 'Não',
+        prioridade: d.prioridade ? '🔴 Sim' : 'Não',
+        grupo:    g.tema
+      });
     });
   });
   return rows;
@@ -2779,12 +2784,15 @@ function buildRelCards() {
 
 function buildRelTable() {
   const rows = getRelFiltered();
-  document.getElementById('relCount').textContent = rows.length + ' processo' + (rows.length!==1?'s':'');
+  const opcao = document.querySelector('input[name="relOpcao"]:checked')?.value || 'todos';
+  document.getElementById('relCount').textContent =
+    rows.length + ' processo' + (rows.length!==1?'s':'') +
+    (opcao === 'prioridade' ? ' 🔴 prioritários' : ' no total');
+
   document.getElementById('relTableBody').innerHTML = rows.map((r,i) =>
     `<tr>
       <td style="color:var(--gray-400);font-size:10px">${i+1}</td>
       <td style="font-family:monospace;font-size:10px;color:var(--blue)">${r.num}</td>
-      <td>${r.tipo}</td>
       <td style="max-width:220px">${r.desc}</td>
       <td>${r.setor}</td>
       <td style="max-width:160px;color:var(--gray-600)">${r.pendencia}</td>
@@ -2796,23 +2804,25 @@ function buildRelTable() {
 }
 
 W._openRelatorio = () => {
+  // Reset to "todos" on open
+  const todosRad = document.getElementById('relOpcaoTodos');
+  if (todosRad) todosRad.checked = true;
   buildRelCards();
   buildRelTable();
   document.getElementById('relOverlay').classList.add('active');
 };
 W._closeRel = () => { document.getElementById('relOverlay').classList.remove('active'); };
 document.getElementById('relOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) W._closeRel(); });
-['relFTipo','relFDemanda','relFSetor','relFContrato'].forEach(id =>
-  document.getElementById(id).addEventListener('change', buildRelTable)
-);
 
 // ── EXPORTAR EXCEL (.xlsx via CSV) ──
 W._exportExcel = () => {
   const rows = getRelFiltered();
-  const headers = ['Nº do Processo','Tipo','Objeto / Descrição','Setor Atual','Pendência','Contrato','Empenho','Grupo'];
+  const opcao = document.querySelector('input[name="relOpcao"]:checked')?.value || 'todos';
+  const titulo = opcao === 'prioridade' ? 'Processos Prioritários' : 'Todos os Processos';
+  const headers = ['Nº do Processo','Objeto / Descrição','Setor Atual','Pendência','Contrato','Empenho','Grupo'];
   const csvRows = [
     headers.join(';'),
-    ...rows.map(r => [r.num,r.tipo,r.desc,r.setor,r.pendencia,r.contrato,r.empenho,r.grupo]
+    ...rows.map(r => [r.num,r.desc,r.setor,r.pendencia,r.contrato,r.empenho,r.grupo]
       .map(v => `"${String(v).replace(/"/g,'""')}"`)
       .join(';'))
   ];
@@ -2821,7 +2831,7 @@ W._exportExcel = () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `processos_ssp_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `${titulo.replace(/ /g,'_')}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 };
@@ -2829,6 +2839,8 @@ W._exportExcel = () => {
 // ── EXPORTAR WORD (.doc via HTML) ──
 W._exportWord = () => {
   const rows = getRelFiltered();
+  const opcao = document.querySelector('input[name="relOpcao"]:checked')?.value || 'todos';
+  const titulo = opcao === 'prioridade' ? 'Processos Prioritários 🔴' : 'Todos os Processos';
   const data = new Date().toLocaleDateString('pt-BR');
   let html = `
     <html xmlns:o='urn:schemas-microsoft-com:office:office'
@@ -2836,25 +2848,31 @@ W._exportWord = () => {
           xmlns='http://www.w3.org/TR/REC-html40'>
     <head><meta charset='utf-8'>
     <style>
-      body { font-family: Arial, sans-serif; font-size: 11pt; }
+      body { font-family: Arial, sans-serif; font-size: 11pt; margin: 30pt 40pt; }
+      .centro { text-align: center; margin-bottom: 18pt; }
       h1 { color: #0d2b4e; font-size: 14pt; margin-bottom: 4pt; }
-      h2 { color: #1e6fb5; font-size: 11pt; margin-top: 12pt; margin-bottom: 4pt; }
-      p  { font-size: 10pt; color: #555; margin-bottom: 12pt; }
+      h2 { color: #1e6fb5; font-size: 12pt; margin: 0 0 4pt; }
+      p  { font-size: 10pt; color: #555; margin-bottom: 14pt; }
       table { width: 100%; border-collapse: collapse; font-size: 9pt; }
       th { background: #0d2b4e; color: white; padding: 6pt 8pt; text-align: left; }
       td { padding: 5pt 8pt; border-bottom: 1pt solid #e2e8f0; }
       tr:nth-child(even) td { background: #f8fafc; }
     </style></head><body>
-    <h1>📋 Painel de Acompanhamento de Processos — SSP</h1>
-    <p>Data de geração: ${data} &nbsp;|&nbsp; Total: ${rows.length} processo${rows.length!==1?'s':''}</p>
+    <div class="centro">
+      <h1>📋 Painel de Acompanhamento de Processos — SSP</h1>
+      <h2>${titulo}</h2>
+      <p>Data de geração: ${data} &nbsp;|&nbsp; Total: ${rows.length} processo${rows.length!==1?'s':''}</p>
+    </div>
     <table>
       <thead><tr>
-        <th>#</th><th>Nº do Processo</th><th>Tipo</th><th>Objeto / Descrição</th>
-        <th>Setor Atual</th><th>Pendência</th><th>Contrato</th><th>Empenho</th><th>Grupo</th>
+        <th>#</th><th>Nº do Processo</th>
+        <th>Objeto / Descrição</th><th>Setor Atual</th>
+        <th>Pendência</th><th>Contrato</th><th>Empenho</th><th>Grupo</th>
       </tr></thead><tbody>
     ${rows.map((r,i) => `<tr>
-      <td>${i+1}</td><td>${r.num}</td><td>${r.tipo}</td><td>${r.desc}</td>
-      <td>${r.setor}</td><td>${r.pendencia}</td><td>${r.contrato}</td><td>${r.empenho}</td><td>${r.grupo}</td>
+      <td>${i+1}</td><td>${r.num}</td>
+      <td>${r.desc}</td><td>${r.setor}</td><td>${r.pendencia}</td>
+      <td>${r.contrato}</td><td>${r.empenho}</td><td>${r.grupo}</td>
     </tr>`).join('')}
     </tbody></table></body></html>`;
 
@@ -2862,7 +2880,7 @@ W._exportWord = () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `processos_ssp_${new Date().toISOString().slice(0,10)}.doc`;
+  a.download = `${titulo.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.doc`;
   a.click();
   URL.revokeObjectURL(url);
 };
@@ -2870,12 +2888,16 @@ W._exportWord = () => {
 // ── IMPRIMIR / PDF ──
 W._printRel = () => {
   const rows = getRelFiltered();
+  const opcao = document.querySelector('input[name="relOpcao"]:checked')?.value || 'todos';
+  const titulo = opcao === 'prioridade' ? 'Processos Prioritários 🔴' : 'Todos os Processos';
   const data = new Date().toLocaleDateString('pt-BR');
   const html = `<!DOCTYPE html><html><head><meta charset='utf-8'>
-    <title>Processos SSP — ${data}</title>
+    <title>${titulo} — ${data}</title>
     <style>
-      body { font-family: Arial, sans-serif; font-size: 10pt; margin: 20pt; }
+      body { font-family: Arial, sans-serif; font-size: 10pt; margin: 20pt 30pt; }
+      .centro { text-align: center; margin-bottom: 14pt; }
       h1 { color: #0d2b4e; font-size: 14pt; margin-bottom: 3pt; }
+      h2 { color: #1e6fb5; font-size: 11pt; margin: 0 0 4pt; }
       p  { color: #555; font-size: 9pt; margin-bottom: 10pt; }
       table { width: 100%; border-collapse: collapse; font-size: 8pt; }
       th { background: #0d2b4e; color: white; padding: 5pt 6pt; text-align: left; }
@@ -2883,16 +2905,21 @@ W._printRel = () => {
       tr:nth-child(even) td { background: #f8fafc; }
       @media print { @page { margin: 15mm; } }
     </style></head><body>
-    <h1>Painel de Acompanhamento de Processos — SSP</h1>
-    <p>Data: ${data} | Total: ${rows.length} processo${rows.length!==1?'s':''}</p>
+    <div class="centro">
+      <h1>Painel de Acompanhamento de Processos — SSP</h1>
+      <h2>${titulo}</h2>
+      <p>Data: ${data} &nbsp;|&nbsp; Total: ${rows.length} processo${rows.length!==1?'s':''}</p>
+    </div>
     <table>
       <thead><tr>
-        <th>#</th><th>Nº do Processo</th><th>Tipo</th><th>Objeto / Descrição</th>
-        <th>Setor</th><th>Pendência</th><th>Contrato</th><th>Empenho</th><th>Grupo</th>
+        <th>#</th><th>Nº do Processo</th>
+        <th>Objeto / Descrição</th><th>Setor</th>
+        <th>Pendência</th><th>Contrato</th><th>Empenho</th><th>Grupo</th>
       </tr></thead><tbody>
       ${rows.map((r,i)=>`<tr>
-        <td>${i+1}</td><td>${r.num}</td><td>${r.tipo}</td><td>${r.desc}</td>
-        <td>${r.setor}</td><td>${r.pendencia}</td><td>${r.contrato}</td><td>${r.empenho}</td><td>${r.grupo}</td>
+        <td>${i+1}</td><td>${r.num}</td>
+        <td>${r.desc}</td><td>${r.setor}</td><td>${r.pendencia}</td>
+        <td>${r.contrato}</td><td>${r.empenho}</td><td>${r.grupo}</td>
       </tr>`).join('')}
       </tbody></table></body></html>`;
   const w = window.open('','_blank');
