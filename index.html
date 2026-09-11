@@ -155,6 +155,87 @@
   }
   .btn-novo-proc:hover { background: #0a1f3a; }
 
+  .btn-nova-acao {
+    background: #7c3aed;
+    color: white; border: none;
+    border-radius: 6px; padding: 7px 14px;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    white-space: nowrap; transition: background 0.15s;
+  }
+  .btn-nova-acao:hover { background: #6d28d9; }
+
+  /* ─── MODAL NOVA AÇÃO ─── */
+  .na-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 500; display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .na-overlay.active { opacity: 1; pointer-events: all; }
+  .na-modal {
+    background: white; border-radius: 12px;
+    width: 92%; max-width: 480px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    transform: translateY(20px); transition: transform 0.2s; overflow: hidden;
+  }
+  .na-overlay.active .na-modal { transform: translateY(0); }
+  .na-header {
+    background: #7c3aed; color: white;
+    padding: 16px 22px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .na-header h3 { font-size: 15px; font-weight: 700; }
+  .na-close { background: none; border: none; color: white; font-size: 22px; cursor: pointer; opacity: .7; line-height: 1; }
+  .na-close:hover { opacity: 1; }
+  .na-body { padding: 22px; }
+  .na-section {
+    font-size: 11px; font-weight: 700; color: #7c3aed;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    border-bottom: 2px solid #ede9fe;
+    padding-bottom: 4px; margin-bottom: 14px; margin-top: 18px;
+  }
+  .na-section:first-child { margin-top: 0; }
+  .na-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  .na-field label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.4px; }
+  .na-field input, .na-field select {
+    border: 1px solid var(--gray-300); border-radius: 7px;
+    padding: 9px 11px; font-size: 13px; font-family: inherit;
+    color: var(--gray-900); background: var(--gray-50); outline: none;
+    transition: border 0.15s, box-shadow 0.15s;
+  }
+  .na-field input:focus, .na-field select:focus {
+    border-color: #7c3aed; background: white;
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+  }
+  .na-req { color: var(--red); }
+  .na-error {
+    background: var(--red-light); color: var(--red);
+    border-radius: 7px; padding: 9px 14px;
+    font-size: 12px; font-weight: 600; margin-bottom: 14px; display: none;
+  }
+  .na-preview {
+    background: #f5f3ff; border: 1px solid #ddd6fe;
+    border-radius: 8px; padding: 12px 14px; margin-top: 16px;
+    font-size: 12px; color: #5b21b6; display: none;
+  }
+  .na-preview strong { display: block; font-size: 13px; margin-bottom: 3px; }
+  .na-footer {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 14px 22px; border-top: 1px solid var(--gray-200);
+  }
+  .na-btn-cancel {
+    background: var(--gray-100); border: 1px solid var(--gray-200);
+    border-radius: 8px; padding: 9px 20px;
+    font-size: 13px; font-weight: 600; color: var(--gray-600);
+    cursor: pointer; font-family: inherit;
+  }
+  .na-btn-cancel:hover { background: var(--gray-200); }
+  .na-btn-save {
+    background: #7c3aed; border: none; border-radius: 8px;
+    padding: 9px 24px; font-size: 13px; font-weight: 700;
+    color: white; cursor: pointer; font-family: inherit; transition: background 0.15s;
+  }
+  .na-btn-save:hover { background: #6d28d9; }
+
   /* ─── MODAL NOVO PROCESSO ─── */
   .np-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.55);
@@ -1183,6 +1264,7 @@
     <button class="btn-clear" onclick="clearFilters()">✕ Limpar filtros</button>
     <button class="btn-relatorio" onclick="W._openRelatorio()">📊 Relatório / Exportar</button>
     <button class="btn-novo-proc" onclick="W._openNovo()">＋ Novo Processo</button>
+    <button class="btn-nova-acao" onclick="W._openNovaAcao()">＋ Nova Ação</button>
   </div>
   <div class="filters-info">
     <span>Exibindo <strong id="visibleCount">0</strong> de <strong id="totalCount">0</strong> processos</span>
@@ -1260,6 +1342,40 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA AÇÃO (GRUPO) -->
+<div class="na-overlay" id="naOverlay">
+  <div class="na-modal">
+    <div class="na-header">
+      <h3>＋ Criar Nova Ação</h3>
+      <button class="na-close" onclick="W._closeNovaAcao()">×</button>
+    </div>
+    <div class="na-body">
+      <div class="na-error" id="naError"></div>
+
+      <div class="na-section">Identificação da Ação</div>
+
+      <div class="na-field">
+        <label>Ícone <span style="font-size:11px;color:var(--gray-400)">(emoji — ex: 🏗️ 🚗 💡)</span></label>
+        <input type="text" id="na_icone" placeholder="🏗️" maxlength="4" style="width:80px;font-size:20px;text-align:center">
+      </div>
+
+      <div class="na-field">
+        <label>Nome da Ação <span class="na-req">*</span></label>
+        <input type="text" id="na_nome" placeholder="Ex: Reforma de Delegacias, Veículos, Armamentos...">
+      </div>
+
+      <div class="na-preview" id="naPreview">
+        <strong id="naPreviewText">—</strong>
+        <span style="color:#7c3aed;font-size:11px">Esta ação aparecerá como um novo grupo na tabela</span>
+      </div>
+    </div>
+    <div class="na-footer">
+      <button class="na-btn-cancel" onclick="W._closeNovaAcao()">Cancelar</button>
+      <button class="na-btn-save" onclick="W._salvarNovaAcao()">✔ Criar Ação</button>
     </div>
   </div>
 </div>
@@ -1585,6 +1701,19 @@ const unsub = onSnapshot(COL, (snapshot) => {
   snapshot.docChanges().forEach(change => {
     const pid = change.doc.id;
     if (change.type === 'removed') return;
+
+    // Metadados de grupos novos criados por outros dispositivos
+    if (pid === '__grpmeta') {
+      const meta = change.doc.data();
+      Object.keys(meta).forEach(gid => {
+        if (gid.startsWith('gx_') && !GRUPOS.find(g => g.id === gid)) {
+          const m = meta[gid];
+          GRUPOS.push({ id: m.id, icone: m.icone || '📁', tema: m.tema, processos: [] });
+          changed = true;
+        }
+      });
+      return;
+    }
 
     // Ordem dos grupos
     if (pid === '__grouporder') {
@@ -2254,6 +2383,92 @@ window.confirmDelete = () => {
   autoRefresh();
 };
 document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ════════════════════════════════════════════════════════
+// NOVA AÇÃO (NOVO GRUPO)
+// ════════════════════════════════════════════════════════
+W._openNovaAcao = () => {
+  document.getElementById('na_icone').value = '';
+  document.getElementById('na_nome').value  = '';
+  document.getElementById('naError').style.display   = 'none';
+  document.getElementById('naPreview').style.display = 'none';
+  document.getElementById('naOverlay').classList.add('active');
+  setTimeout(() => document.getElementById('na_icone').focus(), 150);
+};
+
+W._closeNovaAcao = () => {
+  document.getElementById('naOverlay').classList.remove('active');
+};
+
+// Preview ao digitar
+document.getElementById('na_nome').addEventListener('input', () => {
+  const nome   = document.getElementById('na_nome').value.trim();
+  const icone  = document.getElementById('na_icone').value.trim() || '📁';
+  const prev   = document.getElementById('naPreview');
+  const prevTx = document.getElementById('naPreviewText');
+  if (nome) {
+    prevTx.textContent = icone + '  ' + nome;
+    prev.style.display = 'block';
+  } else {
+    prev.style.display = 'none';
+  }
+});
+document.getElementById('na_icone').addEventListener('input', () => {
+  document.getElementById('na_nome').dispatchEvent(new Event('input'));
+});
+
+W._salvarNovaAcao = async () => {
+  const nome  = document.getElementById('na_nome').value.trim();
+  const icone = document.getElementById('na_icone').value.trim() || '📁';
+  const errEl = document.getElementById('naError');
+
+  if (!nome) {
+    errEl.textContent = '⚠️ Informe o nome da ação.';
+    errEl.style.display = 'block'; return;
+  }
+
+  // Verifica se já existe grupo com mesmo nome
+  if (GRUPOS.some(g => g.tema.toLowerCase() === nome.toLowerCase())) {
+    errEl.textContent = '⚠️ Já existe uma ação com esse nome.';
+    errEl.style.display = 'block'; return;
+  }
+
+  errEl.style.display = 'none';
+
+  // Gera ID único para o grupo
+  const newGid = 'gx_' + Date.now();
+
+  // Adiciona ao array GRUPOS
+  GRUPOS.push({ id: newGid, icone, tema: nome, processos: [] });
+
+  // Salva no Firebase: catálogo de grupos personalizados + ordem
+  if (fbReady) {
+    try {
+      // Salva nomes
+      const names = {};
+      GRUPOS.forEach(g => { names[g.id] = g.tema; });
+      await setDoc(doc(COL, '__grpnames'), { ...names, [`${newGid}_icone`]: icone });
+
+      // Salva ordem
+      const order = GRUPOS.map(g => g.id);
+      await setDoc(doc(COL, '__grouporder'), { order });
+
+      // Salva metadados do novo grupo para outros dispositivos recriarem
+      await setDoc(doc(COL, '__grpmeta'), {
+        [newGid]: { id: newGid, icone, tema: nome }
+      }, { merge: true });
+
+    } catch(e) { console.warn('nova acao save:', e.code); }
+  }
+
+  W._closeNovaAcao();
+  render();
+  autoRefresh();
+};
+
+document.getElementById('naOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) W._closeNovaAcao();
+});
 
 // ════════════════════════════════════════════════════════
 // NOVO PROCESSO
