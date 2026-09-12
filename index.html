@@ -1696,20 +1696,27 @@ async function preLoadGrupos() {
     const metaSnap = await getDoc(doc(COL, '__grpmeta'));
     if (metaSnap.exists()) {
       const meta = metaSnap.data();
-      Object.keys(meta).forEach(gid => {
-        if (!gid.startsWith('gx_')) return;
-        const m = meta[gid];
-        if (!m || !m.tema) return;
-        if (!GRUPOS.find(g => g.id === gid)) {
-          GRUPOS.push({ id: m.id || gid, icone: m.icone || '📁', tema: m.tema, processos: [] });
+      console.log('__grpmeta carregado:', JSON.stringify(meta));
+      Object.keys(meta).forEach(key => {
+        // Suporte a duas estruturas possíveis:
+        // { gx_123: { id, icone, tema } } ou campos diretos
+        const val = meta[key];
+        if (typeof val === 'object' && val !== null && val.tema) {
+          const gid = val.id || key;
+          if (!GRUPOS.find(g => g.id === gid)) {
+            GRUPOS.push({ id: gid, icone: val.icone || '📁', tema: val.tema, processos: [] });
+            console.log('Grupo criado do __grpmeta:', gid, val.tema);
+          }
         }
       });
     }
 
-    // 2. Carrega __grouporder — aplica ordem correta
+    // 2. Carrega __grouporder — aplica ordem
     const orderSnap = await getDoc(doc(COL, '__grouporder'));
     if (orderSnap.exists()) {
-      const { order } = orderSnap.data();
+      const data = orderSnap.data();
+      const order = data.order || [];
+      console.log('__grouporder:', order);
       if (Array.isArray(order) && order.length > 0) {
         const sorted = [];
         order.forEach(id => {
@@ -1729,14 +1736,16 @@ async function preLoadGrupos() {
       Object.keys(names).forEach(key => {
         if (key.endsWith('_icone')) return;
         const g = GRUPOS.find(x => x.id === key);
-        if (g && names[key]) {
-          g.tema  = names[key];
+        if (g && names[key] && typeof names[key] === 'string') {
+          g.tema = names[key];
           if (names[`${key}_icone`]) g.icone = names[`${key}_icone`];
         }
       });
     }
+
+    console.log('Grupos após preLoad:', GRUPOS.map(g => g.id + ':' + g.tema).join(', '));
   } catch(e) {
-    console.warn('preLoadGrupos:', e.code, e.message);
+    console.warn('preLoadGrupos erro:', e.code, e.message);
   }
 }
 
