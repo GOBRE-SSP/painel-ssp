@@ -1583,7 +1583,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getFirestore, collection, doc,
-  setDoc, onSnapshot
+  getDoc, setDoc, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -1686,6 +1686,59 @@ function emptyRec() {
   return { setor:'', pendencia:'', contrato:false, empenho:false, prioridade:false, desc:'', tipo:'', demanda:'', pai:'', deleted:false };
 }
 GRUPOS.forEach(g => g.processos.forEach(p => { DB[p.id] = emptyRec(); }));
+
+// ════════════════════════════════════════════════════════
+// PRÉ-CARREGAMENTO — garante grupos customizados antes do onSnapshot
+// ════════════════════════════════════════════════════════
+async function preLoadGrupos() {
+  try {
+    // 1. Carrega __grpmeta — reconstrói grupos criados pelo usuário
+    const metaSnap = await getDoc(doc(COL, '__grpmeta'));
+    if (metaSnap.exists()) {
+      const meta = metaSnap.data();
+      Object.keys(meta).forEach(gid => {
+        if (!gid.startsWith('gx_')) return;
+        const m = meta[gid];
+        if (!m || !m.tema) return;
+        if (!GRUPOS.find(g => g.id === gid)) {
+          GRUPOS.push({ id: m.id || gid, icone: m.icone || '📁', tema: m.tema, processos: [] });
+        }
+      });
+    }
+
+    // 2. Carrega __grouporder — aplica ordem correta
+    const orderSnap = await getDoc(doc(COL, '__grouporder'));
+    if (orderSnap.exists()) {
+      const { order } = orderSnap.data();
+      if (Array.isArray(order) && order.length > 0) {
+        const sorted = [];
+        order.forEach(id => {
+          const g = GRUPOS.find(x => x.id === id);
+          if (g) sorted.push(g);
+        });
+        GRUPOS.forEach(g => { if (!sorted.find(x => x.id === g.id)) sorted.push(g); });
+        GRUPOS.length = 0;
+        sorted.forEach(g => GRUPOS.push(g));
+      }
+    }
+
+    // 3. Carrega __grpnames — aplica nomes e ícones renomeados
+    const namesSnap = await getDoc(doc(COL, '__grpnames'));
+    if (namesSnap.exists()) {
+      const names = namesSnap.data();
+      Object.keys(names).forEach(key => {
+        if (key.endsWith('_icone')) return;
+        const g = GRUPOS.find(x => x.id === key);
+        if (g && names[key]) {
+          g.tema  = names[key];
+          if (names[`${key}_icone`]) g.icone = names[`${key}_icone`];
+        }
+      });
+    }
+  } catch(e) {
+    console.warn('preLoadGrupos:', e.code, e.message);
+  }
+}
 
 // ════════════════════════════════════════════════════════
 // FIREBASE — listener em tempo real por processo individual
@@ -2443,8 +2496,10 @@ W._salvarNovaAcao = async () => {
     errEl.style.display = 'block'; return;
   }
 
-  if (GRUPOS.some(g => g.tema.toLowerCase() === nome.toLowerCase())) {
-    errEl.textContent = '⚠️ Já existe uma ação com esse nome.';
+  // Verifica duplicidade pelo nome (ignora maiúsculas e espaços extras)
+  const nomeNorm = nome.toLowerCase().trim();
+  if (GRUPOS.some(g => g.tema.toLowerCase().trim() === nomeNorm)) {
+    errEl.textContent = '⚠️ Já existe uma ação com esse nome: "' + nome + '"';
     errEl.style.display = 'block'; return;
   }
 
@@ -3186,9 +3241,14 @@ function populateTemas() {
 // ════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════
-populateTemas();
-render();
 setStatus('⏳ Conectando…', false);
+
+// Pré-carrega grupos customizados do Firebase ANTES de renderizar
+// Isso garante que grupos criados pelo usuário apareçam ao recarregar a página
+preLoadGrupos().then(() => {
+  populateTemas();
+  render();
+});
 </script>
 </body>
 </html>
