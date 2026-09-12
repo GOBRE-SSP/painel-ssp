@@ -488,6 +488,13 @@
     transition: all 0.15s; white-space: nowrap;
   }
   .btn-edit-grp:hover { background: rgba(255,255,255,0.25); color: white; }
+  .btn-del-grp {
+    background: rgba(220,38,38,0.15); border: 1px solid rgba(252,165,165,0.4);
+    border-radius: 4px; color: #fca5a5;
+    font-size: 11px; cursor: pointer; padding: 2px 7px;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-del-grp:hover { background: var(--red); border-color: var(--red); color: white; }
 
   /* Move button */
   .col-move { width: 38px; text-align: center; }
@@ -1562,6 +1569,21 @@
   </div>
 </div>
 
+<!-- MODAL EXCLUIR AÇÃO (GRUPO) -->
+<div class="modal-overlay" id="delGrpModal">
+  <div class="modal">
+    <div class="modal-icon">🗑️</div>
+    <div class="modal-title">Excluir ação?</div>
+    <div class="modal-msg">Você está prestes a excluir a ação:</div>
+    <div class="modal-num" id="delGrpNome">—</div>
+    <div class="modal-msg" id="delGrpAviso" style="margin-top:-12px;margin-bottom:20px;color:var(--red);font-weight:600"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="W._closeDelGrp()">Cancelar</button>
+      <button class="modal-btn-confirm" id="delGrpConfBtn" onclick="W._confirmarDelGrp()">Sim, excluir</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM DELETE MODAL -->
 <div class="modal-overlay" id="deleteModal">
   <div class="modal">
@@ -2207,6 +2229,7 @@ function render() {
               onblur="W._sgrt('${g.id}')"
               onkeydown="if(event.key==='Enter')W._sgrt('${g.id}');if(event.key==='Escape')W._cgrt('${g.id}')">
             <button class="btn-edit-grp" onclick="W._egrt('${g.id}')" title="Renomear grupo">✎ Renomear</button>
+            <button class="btn-del-grp" onclick="W._askDelGrp('${g.id}','${g.tema.replace(/'/g,"\\'")}',${g.processos.length})" title="Excluir esta ação">🗑</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
@@ -2775,6 +2798,82 @@ W._desvincular = () => {
 
 document.getElementById('vnOverlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) W._closeVinc();
+});
+
+// ════════════════════════════════════════════════════════
+// EXCLUIR AÇÃO (GRUPO)
+// ════════════════════════════════════════════════════════
+let delGrpId = null;
+
+W._askDelGrp = (gid, tema, numProcs) => {
+  delGrpId = gid;
+  document.getElementById('delGrpNome').textContent = tema;
+
+  const aviso = document.getElementById('delGrpAviso');
+  const btn   = document.getElementById('delGrpConfBtn');
+
+  if (numProcs > 0) {
+    aviso.textContent = `⚠️ Esta ação contém ${numProcs} processo${numProcs!==1?'s':''} que também serão removidos da lista.`;
+    btn.style.background = '#b91c1c';
+  } else {
+    aviso.textContent = 'Esta ação está vazia e será removida definitivamente.';
+    btn.style.background = '';
+  }
+
+  document.getElementById('delGrpModal').classList.add('active');
+};
+
+W._closeDelGrp = () => {
+  delGrpId = null;
+  document.getElementById('delGrpModal').classList.remove('active');
+};
+
+W._confirmarDelGrp = async () => {
+  if (!delGrpId) return;
+  const gid = delGrpId;
+  W._closeDelGrp();
+
+  // Remove do array local
+  const idx = GRUPOS.findIndex(g => g.id === gid);
+  if (idx === -1) return;
+  const [removido] = GRUPOS.splice(idx, 1);
+
+  // Marca processos do grupo como deletados no Firebase
+  if (fbReady && removido.processos.length > 0) {
+    for (const p of removido.processos) {
+      if (DB[p.id]) DB[p.id].deleted = true;
+      try { await setDoc(doc(COL, p.id), { deleted: true }, { merge: true }); }
+      catch(e) { console.warn('del proc:', e.code); }
+    }
+  }
+
+  // Remove o grupo do __grpmeta
+  if (fbReady) {
+    try {
+      // Salva __grpmeta sem o grupo removido
+      const metaSnap = await getDoc(doc(COL, '__grpmeta'));
+      if (metaSnap.exists()) {
+        const meta = metaSnap.data();
+        delete meta[gid];
+        await setDoc(doc(COL, '__grpmeta'), meta);
+      }
+      // Atualiza a ordem
+      const order = GRUPOS.map(g => g.id);
+      await setDoc(doc(COL, '__grouporder'), { order });
+      setStatus('✓ Ação excluída', false);
+      flashSaved();
+    } catch(e) {
+      console.warn('del grp firebase:', e.code);
+      setStatus('⚠️ Erro ao excluir: ' + e.code, true);
+    }
+  }
+
+  render();
+  autoRefresh();
+};
+
+document.getElementById('delGrpModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) W._closeDelGrp();
 });
 
 // ════════════════════════════════════════════════════════
