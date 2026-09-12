@@ -1698,7 +1698,15 @@ const unsub = onSnapshot(COL, (snapshot) => {
   fbReady = true;
   let changed = false;
 
-  snapshot.docChanges().forEach(change => {
+  // Ordena: __grpmeta primeiro, __grouporder depois, resto por último
+  const priority = { '__grpmeta': 0, '__grpnames': 1, '__grouporder': 2, '__catalog': 3, '__positions': 4 };
+  const changes = [...snapshot.docChanges()].sort((a, b) => {
+    const pa = priority[a.doc.id] ?? 99;
+    const pb = priority[b.doc.id] ?? 99;
+    return pa - pb;
+  });
+
+  changes.forEach(change => {
     const pid = change.doc.id;
     if (change.type === 'removed') return;
 
@@ -1706,21 +1714,29 @@ const unsub = onSnapshot(COL, (snapshot) => {
     if (pid === '__grpmeta') {
       const meta = change.doc.data();
       Object.keys(meta).forEach(gid => {
-        if (gid.startsWith('gx_') && !GRUPOS.find(g => g.id === gid)) {
-          const m = meta[gid];
-          GRUPOS.push({ id: m.id, icone: m.icone || '📁', tema: m.tema, processos: [] });
+        if (!gid.startsWith('gx_')) return;
+        const m = meta[gid];
+        if (!m || !m.tema) return;
+        if (!GRUPOS.find(g => g.id === gid)) {
+          GRUPOS.push({ id: m.id || gid, icone: m.icone || '📁', tema: m.tema, processos: [] });
           changed = true;
         }
       });
+      // Do NOT return yet — let __grouporder re-sort after this
       return;
     }
 
-    // Ordem dos grupos
+    // Ordem dos grupos — só aplica depois que __grpmeta já criou os grupos novos
     if (pid === '__grouporder') {
-      const { order } = change.doc.data();
-      if (Array.isArray(order)) {
-        const sorted = order.map(id => GRUPOS.find(g => g.id === id)).filter(Boolean);
-        // Add any groups not in the saved order at the end
+      const raw = change.doc.data();
+      const order = raw.order;
+      if (Array.isArray(order) && order.length > 0) {
+        const sorted = [];
+        order.forEach(id => {
+          const g = GRUPOS.find(x => x.id === id);
+          if (g) sorted.push(g);
+        });
+        // Adiciona grupos que não estão na ordem salva (ex: grupos base)
         GRUPOS.forEach(g => { if (!sorted.find(x => x.id === g.id)) sorted.push(g); });
         GRUPOS.length = 0;
         sorted.forEach(g => GRUPOS.push(g));
@@ -2427,7 +2443,6 @@ W._salvarNovaAcao = async () => {
     errEl.style.display = 'block'; return;
   }
 
-  // Verifica se já existe grupo com mesmo nome
   if (GRUPOS.some(g => g.tema.toLowerCase() === nome.toLowerCase())) {
     errEl.textContent = '⚠️ Já existe uma ação com esse nome.';
     errEl.style.display = 'block'; return;
@@ -2435,30 +2450,38 @@ W._salvarNovaAcao = async () => {
 
   errEl.style.display = 'none';
 
-  // Gera ID único para o grupo
   const newGid = 'gx_' + Date.now();
 
-  // Adiciona ao array GRUPOS
+  // Adiciona localmente
   GRUPOS.push({ id: newGid, icone, tema: nome, processos: [] });
 
-  // Salva no Firebase: catálogo de grupos personalizados + ordem
   if (fbReady) {
     try {
-      // Salva nomes
-      const names = {};
-      GRUPOS.forEach(g => { names[g.id] = g.tema; });
-      await setDoc(doc(COL, '__grpnames'), { ...names, [`${newGid}_icone`]: icone });
+      setStatus('💾 Salvando nova ação…', false);
 
-      // Salva ordem
-      const order = GRUPOS.map(g => g.id);
-      await setDoc(doc(COL, '__grouporder'), { order });
-
-      // Salva metadados do novo grupo para outros dispositivos recriarem
+      // 1. Salva metadados do grupo (merge — não apaga outros)
       await setDoc(doc(COL, '__grpmeta'), {
         [newGid]: { id: newGid, icone, tema: nome }
       }, { merge: true });
 
-    } catch(e) { console.warn('nova acao save:', e.code); }
+      // 2. Salva a ordem completa dos grupos
+      const order = GRUPOS.map(g => g.id);
+      await setDoc(doc(COL, '__grouporder'), { order });
+
+      // 3. Salva o nome no __grpnames (merge — não apaga outros)
+      await setDoc(doc(COL, '__grpnames'), {
+        [newGid]: nome,
+        [`${newGid}_icone`]: icone
+      }, { merge: true });
+
+      setStatus('✓ Nova ação criada ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), false);
+      flashSaved();
+    } catch(e) {
+      console.error('nova acao save error:', e.code, e.message);
+      setStatus('⚠️ Erro ao salvar: ' + e.code, true);
+    }
+  } else {
+    setStatus('⚠️ Sem conexão — ação criada só localmente', true);
   }
 
   W._closeNovaAcao();
